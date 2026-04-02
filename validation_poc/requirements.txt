@@ -1,0 +1,7 @@
+torch>=2.0
+gymnasium>=0.29
+numpy
+matplotlib
+seaborn
+pyyaml
+tqdm

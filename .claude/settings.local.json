@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/results/.gitkeep)",
+      "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/results/checkpoints/.gitkeep)",
+      "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/results/plots/.gitkeep)",
+      "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/env/__init__.py)",
+      "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/models/__init__.py)",
+      "Bash(conda env:*)",
+      "Bash(conda run:*)"
+    ]
+  }
+}

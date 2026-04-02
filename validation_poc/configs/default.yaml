@@ -1,0 +1,31 @@
+env:
+  grid_size: 15
+  n_agents: 3
+  n_enemies: 2
+  n_zones: 3
+  max_steps: 200
+  win_hold_steps: 20
+  team_reward_alpha: 0.2
+  obs_dim: 65
+  action_dim: 6
+
+training:
+  total_steps: 2000000
+  batch_size: 512
+  minibatch_size: 64
+  ppo_epochs: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  entropy_coeff: 0.01
+  lr: 3.0e-4
+  max_grad_norm: 0.5
+  log_interval: 10000
+  checkpoint_interval: 200000
+  n_eval_episodes: 10
+  n_seeds: 3
+
+model:
+  embed_dim: 64
+  num_heads: 2
+  action_dim: 6
