@@ -58,7 +58,13 @@ def main():
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    device = torch.device('cpu')
+
+    # Resource control: limit CPU threads per process (set via env var CPU_THREADS)
+    n_threads = int(os.environ.get('CPU_THREADS', '2'))
+    torch.set_num_threads(n_threads)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Using device: {device}')
 
     # Setup dirs
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
