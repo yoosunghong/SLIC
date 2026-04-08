@@ -1,0 +1,19 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Reward engineering for heterogeneous cooperative MARL is underspecified in a specific way: role labels are easy to define but hard to exploit structurally. A practitioner can assign Strike, Vanguard, and Support roles, write role-differentiated reward functions, and still end up with policies that treat role labels as largely inert features\textemdash background signal in a flat input vector, outweighed by spatial features that are more immediately informative for credit assignment.
+
+This paper is concerned with a concrete instance of that problem: the \emph{routing} problem. In a heterogeneous team, each agent must not only understand its own behavioral mandate but also identify \emph{which teammates are most relevant to its decision at each timestep}. A ranged attacker may benefit from knowing the frontline tank's position more than the healer's. A healer should track the lowest-health ally, not the nearest enemy. These routing preferences are determined by role-pair relationships, not spatial proximity alone. The question is whether a policy architecture can learn role-to-role routing, and whether it does so in a way that is legible.
+
+We argue that Intra-Set Self-Attention, when applied to entity-centric observations in which role labels appear in both \texttt{self\_tok} and \texttt{ally\_tok} slots, provides a direct structural inductive bias for role-to-role routing that MLP-based policies lack. In an MLP, the role label is concatenated with all other features and processed jointly by shared weight matrices: the network can, in principle, learn to upweight role-relevant entities, but there is no structural path that makes this computation explicit or short. In attention, the role label in \texttt{self\_tok} conditions the Query and the role label in each \texttt{ally\_tok} conditions the corresponding Key; the attention score is therefore a direct function of the role pair $(r_i, r_j)$, making role-to-role routing structurally explicit and attributable (Section~\ref{sec:theory}).
+
+The contribution of this paper is not state-of-the-art performance. All five conditions we evaluate reach competitive win rates on the proposed environment. The contribution is an \textbf{analysis framework}\textemdash the role-routing matrix, the formation sensitivity metric $\Delta_{\max}$, and gradient attribution comparison\textemdash that makes role routing legible and comparable across architectures. This framework reveals that:
+
+\begin{itemize}
+  \item Attention produces approximately $2\times$ more structured role-routing patterns than MLP (cross-role routing matrix std: 0.323 vs.\ 0.153).
+  \item The MLP baseline underutilizes role labels by 2.4\textendash3.7$\times$ relative to spatial features (input gradient attribution).
+  \item Role labels are load-bearing: removing them while using a shared policy produces an 8.5 percentage-point performance deficit (0.780 vs.\ 0.920 win rate).
+  \item Role-to-role routing is structured but not always intuition-consistent: Strike attends primarily to the Vanguard frontliner (0.961), not the Support healer as originally predicted.
+\end{itemize}
+
+Of five a priori predictions, three pass and two are revised. The two failures are informative: they reveal that the attention mechanism learns role-pair routing that is task-consistent rather than assumption-consistent, and that the routing matrix is the appropriate empirical tool for characterizing what the network actually learns rather than prescribing it from role descriptions alone.

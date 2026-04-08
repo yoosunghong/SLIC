@@ -111,12 +111,13 @@ def compute_delta_max(policies, device: torch.device):
 
 def compute_mlp_gradient_attribution(policy, obs_np: np.ndarray, device: torch.device):
     """Compute input gradient attribution for spatial vs role dims."""
-    obs = torch.tensor(obs_np, dtype=torch.float32, device=device, requires_grad=True).unsqueeze(0)
+    obs_leaf = torch.tensor(obs_np, dtype=torch.float32, device=device, requires_grad=True)
+    obs = obs_leaf.unsqueeze(0)
     logits, _ = policy(obs)
     # Use max logit as scalar output
     output = logits.max(dim=-1).values.sum()
     output.backward()
-    grad = obs.grad.squeeze(0).abs().cpu().numpy()
+    grad = obs_leaf.grad.abs().cpu().numpy()
 
     # Spatial dims: positions throughout obs (rough heuristic: all non-role dims)
     # Role dims in self_tok: 5,6,7
@@ -216,10 +217,11 @@ def main():
             plot_gradient_attribution(role.capitalize(), sp_grad, role_grad, plots_dir)
 
             # Build pseudo routing from gradient attribution on role dims in ally_tok
-            obs = torch.tensor(clustered_obs[role], dtype=torch.float32, device=device, requires_grad=True).unsqueeze(0)
+            obs_leaf = torch.tensor(clustered_obs[role], dtype=torch.float32, device=device, requires_grad=True)
+            obs = obs_leaf.unsqueeze(0)
             logits, _ = policies3[i](obs)
             logits.max(dim=-1).values.sum().backward()
-            grad = obs.grad.squeeze(0).abs().cpu().numpy()
+            grad = obs_leaf.grad.abs().cpu().numpy()
             # ally slot 0 role dims: 12,13,14 — ally slot 1 role dims: 20,21,22
             ally_slot_roles = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
             for slot_idx, ally_role_idx in enumerate(ally_slot_roles[i]):

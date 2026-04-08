@@ -1,0 +1,11 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Role discovery in cooperative MARL.}
+ROMA~\cite{roma2020} learns latent role representations automatically from trajectories using variational methods, enabling emergent specialization without pre-defined role semantics. R3DM~\cite{r3dm2025} extends role discovery with attention-based communication and a diversity objective to prevent role collapse. Both works frame roles as a discovery problem: the system infers what roles should be. Our work takes the complementary view: given pre-defined role labels (Strike, Vanguard, Support), we analyze the \emph{mechanism} by which different policy architectures exploit those labels. This is a conditioning problem, not a discovery problem. The question is not ``what roles emerge?'' but ``does the architecture make role labels structurally load-bearing for entity selection?''
+
+\paragraph{Relational reasoning in RL.}
+Zambaldi et al.~\cite{zambaldi2018} introduced self-attention as a relational inductive bias for single-agent reinforcement learning, demonstrating that agents can learn to attend to task-relevant entities in pixel-based Atari environments. We extend this to the multi-agent heterogeneous setting, where the relevant entity is not just the spatially proximate one but the role-compatible one. Entity-centric observation representations~\cite{entitycentric} provide the structured input format that makes this extension natural: by placing role labels in distinct positions within \texttt{self\_tok} and \texttt{ally\_tok}, we create the structural conditions for role-conditioned Q/K routing that is absent in flat observation baselines.
+
+\paragraph{Cooperative optimization without interpretability.}
+QMIX~\cite{rashid2018qmix} and standard MAPPO~\cite{yu2022mappo} establish strong baselines for centralized-training decentralized-execution cooperative MARL, but neither provides tools for inspecting what entity-level structure the learned policies exploit. Our work is not a performance comparison against these methods; it is an interpretability study within a controlled ablation framework. The five-condition design holds the algorithm (MAPPO), environment, and hyperparameters fixed, varying only architecture and label availability, so that structural differences in routing patterns can be attributed cleanly.

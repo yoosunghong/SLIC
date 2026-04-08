@@ -1,0 +1,29 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Interpreting the Two Revised Predictions}
+
+\paragraph{Strike$\to$Vanguard, not Strike$\to$Support.}
+The original prediction held that Strike agents, as ranged DPS, would attend primarily to the Support healer\textemdash reasoning that a ranged attacker benefits from proximity to a healer for survivability. The data shows the opposite: Strike attends almost exclusively to Vanguard (0.961 vs.\ 0.039 to Support). This is behaviorally rational. In a capture-zone task, a ranged attacker's primary spatial problem is staying at effective range while remaining within striking distance of the objective. The Vanguard frontliner, as a melee tank occupying zones, provides exactly the spatial reference point that Strike needs to calibrate its distance. Support, positioned behind allies, provides less actionable positioning signal for a ranged DPS agent. The prediction was wrong, but the routing is coherent and role-structured. Critically, Strike$\to$Vanguard dominance (0.961) is itself a strong off-diagonal signal: the attention routing matrix is not diffuse or uniform, which is the core claim.
+
+\paragraph{Strike $\Delta_{\max}$ lowest, not Support.}
+The original prediction held that Support would show the lowest formation sensitivity ($\Delta_{\max}$) because a healer's task\textemdash tracking the lowest-HP ally\textemdash is role-driven rather than formation-driven. The data shows Strike is lowest ($\Delta_{\max} = 0.100$) and Support is intermediate (0.133). A plausible interpretation: Support's boosting mechanic (a bonus for nearby occupied zones) means that formation does matter for Support's reward signal, making it moderately formation-sensitive. Strike, as a ranged agent that maintains distance from enemies, may be less sensitive to the specific clustering pattern of allies because its positioning is primarily determined by enemy location and zone proximity rather than ally formation. These are post-hoc explanations, and we flag them as such. The revised finding does not weaken the structural claim; it narrows the a priori interpretation of which roles are most formation-sensitive.
+
+\subsection{The Routing Matrix as a Behavioral Fingerprint}
+
+The 3$\times$3 role-routing matrix (Table~\ref{tab:routing}) is the primary interpretability output of this work. Each row exhibits a distinct, non-uniform distribution: Strike concentrates almost all weight on Vanguard (0.961); Vanguard distributes across Strike (0.574) and Support (0.426); Support distributes across Vanguard (0.547) and Strike (0.453). No two rows have the same pattern. This per-role distinctiveness is what we mean by ``role-differentiated routing'': the attention mechanism has learned to use role-pair relationships as the primary signal for entity selection, producing patterns that are both non-trivial and interpretable in terms of the agents' behavioral mandates. The MLP baseline produces routing patterns with approximately half the variance (std 0.153 vs.\ 0.323), confirming that this structure is architecturally contingent, not an inevitable consequence of training on role-specific rewards.
+
+\subsection{Limitations}
+
+\paragraph{Environment scope.}
+The experiments are conducted on a custom MiniGrid environment, which is designed to require role-coordinated behavior but is substantially simpler than standard MARL benchmarks. SMACv2 replication is the next required step for benchmark credibility. The analysis framework (routing matrix, $\Delta_{\max}$, gradient attribution) is environment-agnostic and should transfer directly; the specific routing patterns may differ under richer dynamics.
+
+\paragraph{Single-seed Track 2 analysis.}
+The routing matrix and $\Delta_{\max}$ values reported in Section~\ref{sec:experiments} are extracted from a single checkpoint (seed 0 of Condition 1). Multi-seed averaging would provide more robust estimates and confidence intervals over the routing patterns. The qualitative structure (Vanguard highest $\Delta_{\max}$; Strike strong off-diagonal dominance) is unlikely to reverse across seeds, given the consistency of Track 1 performance across seeds, but this remains an assumption.
+
+\paragraph{MLP inductive bias, not MLP impossibility.}
+The theory section and the gradient attribution results argue that attention provides a more direct structural path for role-to-role routing than MLP. They do not argue that MLP cannot learn such routing. An MLP with explicit role-pair feature engineering\textemdash pre-computing the outer product of the agent's role one-hot and each ally's role one-hot as an additional input feature\textemdash could provide MLP with a comparably direct routing signal. The present work does not evaluate this variant; it evaluates a standard flat-input MLP, which is the common baseline in cooperative MARL.
+
+\subsection{Future Work}
+
+The immediate next step is SMACv2 extension, in which unit types (Stalker, Zealot, Colossus in protoss maps) serve as pre-defined heterogeneous roles. The role label mechanism transfers directly: unit type one-hots in \texttt{self\_tok} and \texttt{ally\_tok} condition Q and K respectively. A multi-seed Track 2 analysis on SMACv2 checkpoints would provide the benchmark-scale evidence needed for the structural routing claim to be generalized beyond the PoC environment. Appendix validation using the existing UE5 Unreal Engine data is also planned, providing a real-world game-engine replication of the routing patterns initially observed in the MiniGrid PoC.

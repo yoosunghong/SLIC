@@ -8,7 +8,12 @@
       "Bash(touch /c/Users/PC/Documents/GitHub/de_paper/validation_poc/models/__init__.py)",
       "Bash(conda env:*)",
       "Bash(conda run:*)",
-      "Bash(wc -l d:/Github/SLIC/validation_poc/results/cond*.csv)"
+      "Bash(wc -l d:/Github/SLIC/validation_poc/results/cond*.csv)",
+      "Bash(wc -l /home/swim/Documents/Projects/SLIC/SLIC/validation_poc/results/cond*_seed*.csv)",
+      "Bash(conda create:*)",
+      "Bash(CPU_THREADS=4 conda run -n paper python training/train.py --condition 1 --seed 0)",
+      "Bash(echo \"Training started in background \\(PID family: $!\\)\")",
+      "Bash(ls /home/swim/Documents/Projects/SLIC/SLIC/validation_poc/results/*.csv)"
     ]
   }
 }
