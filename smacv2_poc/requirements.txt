@@ -1,0 +1,21 @@
+# Core (shared with validation_poc)
+torch>=2.0
+numpy
+matplotlib
+seaborn
+pyyaml
+tqdm
+
+# SMACv2 and StarCraft II
+# Install SMACv2 from source:
+#   pip install git+https://github.com/oxwhirl/smacv2.git
+# Then install pysc2:
+#   pip install pysc2>=3.0
+#
+# StarCraft II binary: download from Blizzard at
+#   https://github.com/Blizzard/s2client-proto#downloads
+# Extract to ~/StarCraftII/
+#
+# SMACv2 maps: copy smacv2/maps/ into ~/StarCraftII/Maps/
+smacv2
+pysc2>=3.0

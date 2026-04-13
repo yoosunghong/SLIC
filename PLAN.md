@@ -150,3 +150,7 @@ These must remain identical across all 5 ablation conditions to ensure valid com
 - Episode length (200 steps)
 - Map layout and role assignment logic
 - Random seeds (use 3 seeds per condition, report mean ± std)
+## Completed Tasks
+
+- 2026-04-14: Fixed circular-import risk between `smacv2_poc` and `validation_poc` by replacing ambiguous top-level imports with explicit `validation_poc.*` package imports in shared training, analysis, and baseline modules.
+- 2026-04-14: Changed the default SMACv2 training setup to a valid installed map (`10gen_protoss`) with manual fixed-team reset config so training no longer depends on random role-composition resampling.

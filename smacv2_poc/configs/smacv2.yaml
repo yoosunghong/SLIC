@@ -1,0 +1,42 @@
+# SMACv2 experiment configuration
+# All hyperparameters are identical to configs/default.yaml in validation_poc.
+# DO NOT tune per-condition — the point is structural comparison.
+
+env:
+  map_name: 10gen_protoss
+  use_capability_wrapper: false  # Use manual fixed-team reset on a valid installed SMACv2 map
+  n_agents: 3             # Stalker×1 (Strike), Zealot×1 (Vanguard), Colossus×1 (Support)
+  n_enemies: 2
+  n_zones: 3              # 3 fixed landmark positions used as zone_tok proxies
+  max_steps: 200
+  obs_dim: 65             # Entity-centric obs (Conditions 1-5)
+  action_dim: 6           # no-op, move N/S/E/W, attack
+  team_reward_alpha: 0.2  # r_final = 0.8*r_individual + 0.2*mean(r_team)
+  # raw_obs_dim: null     # Auto-detected for Condition 6; set explicitly if needed
+
+training:
+  total_steps: 2000000
+  batch_size: 512
+  minibatch_size: 64
+  ppo_epochs: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  entropy_coeff: 0.01
+  lr: 3.0e-4
+  max_grad_norm: 0.5
+  log_interval: 10000
+  checkpoint_interval: 200000
+  n_eval_episodes: 10
+  n_seeds: 3
+
+model:
+  embed_dim: 64
+  num_heads: 2
+  action_dim: 6
+
+resources:
+  # Intel Core U7, 8 cores  → 50% = 4 threads
+  num_cpu_threads: 4
+  # 4 GB VRAM               → 50% = 2 GB  (fraction applied via torch.cuda)
+  vram_fraction: 0.5

@@ -14,10 +14,10 @@ from tqdm import tqdm
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from env.cooperative_grid import CooperativeGridEnv
-from models import build_policies, CentralizedCritic
-from training.rollout import collect_rollout
-from training.mappo import MAPPOTrainer
+from validation_poc.env.cooperative_grid import CooperativeGridEnv
+from validation_poc.models import build_policies, CentralizedCritic
+from validation_poc.training.rollout import collect_rollout
+from validation_poc.training.mappo import MAPPOTrainer
 
 
 def evaluate(env, policies, n_episodes: int, device: torch.device):
@@ -49,7 +49,7 @@ def main():
 
     # Load config
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), args.config)
-    with open(config_path) as f:
+    with open(config_path, encoding='utf-8') as f:
         cfg = yaml.safe_load(f)
 
     env_cfg = cfg['env']

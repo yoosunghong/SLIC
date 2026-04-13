@@ -1,0 +1,6 @@
+results/checkpoints/
+results/plots/
+results/*.csv
+__pycache__/
+*.pyc
+*.pt

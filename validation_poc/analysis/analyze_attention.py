@@ -14,9 +14,9 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models import build_policies, CentralizedCritic
-from analysis.scenario_builder import build_scenario_obs, ROLES
-from analysis.visualize import (
+from validation_poc.models import build_policies, CentralizedCritic
+from validation_poc.analysis.scenario_builder import build_scenario_obs, ROLES
+from validation_poc.analysis.visualize import (
     plot_self_attn_heatmap,
     plot_role_routing_matrix,
     plot_delta_max_comparison,
