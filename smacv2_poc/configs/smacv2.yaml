@@ -3,14 +3,14 @@
 # DO NOT tune per-condition — the point is structural comparison.
 
 env:
-  map_name: 10gen_protoss
+  map_name: 10gen_terran
   use_capability_wrapper: false  # Use manual fixed-team reset on a valid installed SMACv2 map
-  n_agents: 3             # Stalker×1 (Strike), Zealot×1 (Vanguard), Colossus×1 (Support)
-  n_enemies: 2
+  n_agents: 3             # Marine×1 (Strike), Marauder×1 (Vanguard), Medivac×1 (Support)
+  n_enemies: 3            # Marine×2 + Marauder×1; observation shows 2 closest per agent
   n_zones: 3              # 3 fixed landmark positions used as zone_tok proxies
   max_steps: 200
-  obs_dim: 65             # Entity-centric obs (Conditions 1-5)
-  action_dim: 6           # no-op, move N/S/E/W, attack
+  obs_dim: 65             # Entity-centric obs (Conditions 1-5); enemy slots capped at 2
+  action_dim: 6           # stop, move N/S/E/W, attack (Medivac attack falls back to stop)
   team_reward_alpha: 0.2  # r_final = 0.8*r_individual + 0.2*mean(r_team)
   # raw_obs_dim: null     # Auto-detected for Condition 6; set explicitly if needed
 
