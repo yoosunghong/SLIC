@@ -13,7 +13,11 @@
       "Bash(conda create:*)",
       "Bash(CPU_THREADS=4 conda run -n paper python training/train.py --condition 1 --seed 0)",
       "Bash(echo \"Training started in background \\(PID family: $!\\)\")",
-      "Bash(ls /home/swim/Documents/Projects/SLIC/SLIC/validation_poc/results/*.csv)"
+      "Bash(ls /home/swim/Documents/Projects/SLIC/SLIC/validation_poc/results/*.csv)",
+      "Bash(xargs grep:*)",
+      "Read(//d/Github/SLIC/**)",
+      "Bash(cp \"D:\\\\Github\\\\SLIC\\\\validation_poc\\\\env\\\\__init__.py\" \"D:\\\\Github\\\\SLIC\\\\.claude\\\\worktrees\\\\gracious-curran\\\\validation_poc\\\\env\\\\__init__.py\")",
+      "Bash(cp \"D:\\\\Github\\\\SLIC\\\\validation_poc\\\\env\\\\cooperative_grid.py\" \"D:\\\\Github\\\\SLIC\\\\.claude\\\\worktrees\\\\gracious-curran\\\\validation_poc\\\\env\\\\cooperative_grid.py\")"
     ]
   }
 }
