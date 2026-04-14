@@ -14,6 +14,9 @@ venv/
 .venv/
 env/
 .env/
+!smacv2_poc/env/
+!smacv2_poc/env/__init__.py
+!smacv2_poc/env/smac_wrapper.py
 
 # Results (large files)
 results/checkpoints/
