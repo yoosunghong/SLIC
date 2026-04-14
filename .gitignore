@@ -12,7 +12,6 @@ build/
 # Virtual environments
 venv/
 .venv/
-env/
 .env/
 !smacv2_poc/env/
 !smacv2_poc/env/__init__.py
@@ -49,3 +48,5 @@ runs/
 # Misc
 *.bak
 *.tmp
+
+.claude/

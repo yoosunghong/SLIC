@@ -73,6 +73,7 @@ def main():
     log_path = os.path.join(base, args.results_dir, f'cond{args.condition}_seed{args.seed}.csv')
 
     env = CooperativeGridEnv(env_cfg)
+    env.reset(seed=args.seed)  # seed the env's internal RNG for reproducibility
 
     policies = build_policies(
         args.condition,
