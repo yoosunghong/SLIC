@@ -1,10 +1,10 @@
 """Build fixed observation vectors for Clustered and Spread scenarios."""
 import numpy as np
 
-GRID_SIZE = 15
+GRID_SIZE = 32
 ROLES = ['strike', 'vanguard', 'support']
 ROLE_ONEHOT = np.eye(3, dtype=np.float32)
-ZONE_POSITIONS = np.array([(2, 2), (12, 2), (7, 7)], dtype=np.float32)
+ZONE_POSITIONS = np.array([(4, 4), (4, 27), (15, 15)], dtype=np.float32)  # top-left, top-right, center
 
 OBS_DIM = 65
 N_AGENTS = 3
@@ -72,24 +72,24 @@ def build_scenario_obs(scenario: str) -> dict:
     """
     if scenario == 'clustered':
         agent_positions = np.array([
-            [2.0, 2.0],   # Strike at zone 0
-            [3.0, 2.0],   # Vanguard near zone 0
-            [2.0, 3.0],   # Support near zone 0
+            [4.0,  4.0],  # Strike at zone 0 (top-left)
+            [5.0,  4.0],  # Vanguard near zone 0
+            [4.0,  5.0],  # Support near zone 0
         ], dtype=np.float32)
         enemy_positions = np.array([
-            [13.0, 13.0],
-            [12.0, 13.0],
+            [28.0, 28.0],
+            [27.0, 28.0],
         ], dtype=np.float32)
 
     elif scenario == 'spread':
         agent_positions = np.array([
-            [2.0, 2.0],   # Strike at zone 0 (top-left)
-            [12.0, 2.0],  # Vanguard at zone 1 (top-right)
-            [7.0, 7.0],   # Support at zone 2 (center)
+            [ 4.0,  4.0],  # Strike at zone 0 (top-left)
+            [ 4.0, 27.0],  # Vanguard at zone 1 (top-right)
+            [15.0, 15.0],  # Support at zone 2 (center)
         ], dtype=np.float32)
         enemy_positions = np.array([
-            [7.0, 10.0],
-            [8.0, 10.0],
+            [15.0, 20.0],
+            [16.0, 20.0],
         ], dtype=np.float32)
     else:
         raise ValueError(f"Unknown scenario: {scenario}")

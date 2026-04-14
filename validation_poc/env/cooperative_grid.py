@@ -1,6 +1,6 @@
 """
 Cooperative 3-role grid environment.
-15×15 grid, 3 agents (Strike/Vanguard/Support), 2 enemies, 3 capture zones.
+32×32 grid, 3 agents (Strike/Vanguard/Support), 2 enemies, 3 capture zones.
 
 Observation per agent: 65-dim flat vector
   self_tok    [0:8]   pos(2) + vel(2) + health(1) + role_onehot(3)
@@ -22,8 +22,8 @@ ROLE_VANGUARD = 1
 ROLE_SUPPORT = 2
 ROLE_NAMES = ['Strike', 'Vanguard', 'Support']
 
-# Zone positions (row, col) on 15×15 grid
-ZONE_CENTERS = [(2, 2), (2, 12), (7, 7)]  # top-left, top-right, center
+# Zone positions (row, col) on 32×32 grid
+ZONE_CENTERS = [(4, 4), (4, 27), (15, 15)]  # top-left, top-right, center
 ZONE_RADIUS = 1  # Manhattan radius for capture
 
 # Action deltas: up, down, left, right, stay, special
@@ -73,14 +73,14 @@ class CooperativeGridEnv(gym.Env):
         # Spawn agents clustered near a random zone center so they can learn
         # cooperation from the start rather than being picked off individually.
         anchor_zone = self.zone_centers[self._rng.integers(0, self.n_zones)]
-        offsets = self._rng.integers(-3, 4, size=(self.n_agents, 2))
+        offsets = self._rng.integers(-2, 3, size=(self.n_agents, 2))
         raw = anchor_zone[np.newaxis, :] + offsets
         self.agent_pos = np.clip(raw, 1, self.grid_size - 2).astype(np.float32)
         self.agent_vel = np.zeros((self.n_agents, 2), dtype=np.float32)
         self.agent_health = np.full(self.n_agents, MAX_HEALTH, dtype=np.float32)
         self.agent_alive = np.ones(self.n_agents, dtype=bool)
 
-        # Enemy positions — start in bottom-right quadrant
+        # Enemy positions — start in bottom-right corner
         self.enemy_pos = self._rng.integers(self.grid_size - 6, self.grid_size - 1, size=(self.n_enemies, 2)).astype(np.float32)
         self.enemy_health = np.full(self.n_enemies, MAX_HEALTH, dtype=np.float32)
         self.enemy_alive = np.ones(self.n_enemies, dtype=bool)

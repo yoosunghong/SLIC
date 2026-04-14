@@ -1,5 +1,5 @@
 env:
-  grid_size: 15
+  grid_size: 32
   n_agents: 3
   n_enemies: 2
   n_zones: 3

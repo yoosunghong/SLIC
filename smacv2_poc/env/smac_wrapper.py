@@ -118,6 +118,10 @@ ENEMY_DANGER_DIST    = 0.10    # Medivac rear penalty threshold
 
 DEFAULT_MAP_SIZE  = 32
 MAX_RESET_RETRIES = 20
+# Maximum allowed pairwise distance between any two allies at spawn (normalized 0-1).
+# 0.25 ≈ 8 tiles on a 32×32 map — tight enough that a Medivac can reach any ally
+# within a few steps, but loose enough that retries converge quickly.
+MAX_ALLY_SPREAD   = 0.25
 
 
 def _safe_unit_type_onehot(unit_type: int) -> np.ndarray:
@@ -236,8 +240,11 @@ class SMACWrapper:
         if self._use_capability_wrapper:
             self._reset_until_valid_roles()
         elif self._manual_fixed_team:
-            self._env.reset(self._build_fixed_episode_config())
-            self._build_role_map()
+            for _ in range(MAX_RESET_RETRIES):
+                self._env.reset(self._build_fixed_episode_config())
+                self._build_role_map()
+                if self._ally_spread() <= MAX_ALLY_SPREAD:
+                    break
         else:
             self._env.reset()
             self._build_role_map()
@@ -327,8 +334,23 @@ class SMACWrapper:
 
         self._enemy_ids = sorted(enemies.keys())[:self.n_enemies]
 
+    def _ally_spread(self) -> float:
+        """Return the max pairwise Euclidean distance between alive allies (normalized)."""
+        positions = []
+        for uid in self._agent_ids:
+            unit = self._env.agents.get(uid)
+            if unit is not None and unit.health > 0:
+                positions.append(self._norm_pos(unit.pos.x, unit.pos.y))
+        if len(positions) < 2:
+            return 0.0
+        max_d = 0.0
+        for i in range(len(positions)):
+            for j in range(i + 1, len(positions)):
+                max_d = max(max_d, _dist(positions[i], positions[j]))
+        return max_d
+
     def _reset_until_valid_roles(self):
-        """Retry generated episodes until ally team contains Marine, Marauder, and Medivac."""
+        """Retry until ally team has Marine+Marauder+Medivac and allies spawn close together."""
         last_seen = None
         for _ in range(MAX_RESET_RETRIES):
             self._env.reset()
@@ -338,7 +360,8 @@ class SMACWrapper:
                 for unit in self._env.agents.values()
             }
             last_seen = sorted(ally_types)
-            if all(ut in ally_types for ut in ROLE_UNIT_TYPES):
+            if (all(ut in ally_types for ut in ROLE_UNIT_TYPES)
+                    and self._ally_spread() <= MAX_ALLY_SPREAD):
                 return
         raise RuntimeError(
             "Failed to sample a valid ally composition containing Marine, Marauder, "
