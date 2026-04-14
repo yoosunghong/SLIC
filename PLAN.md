@@ -156,3 +156,4 @@ These must remain identical across all 5 ablation conditions to ensure valid com
 - 2026-04-14: Changed the default SMACv2 training setup to a valid installed map (`10gen_protoss`) with manual fixed-team reset config so training no longer depends on random role-composition resampling.
 - 2026-04-14: Added `de_paper/MAIN_CONFERENCE_PLAN.md`, a concrete upgrade plan for turning the current mechanism-validation project into a main-conference paper with stronger baselines, causal interventions, benchmark generalization, and publication criteria.
 - 2026-04-14: Added `de_paper/MAIN_CONFERENCE_PAPER_OUTLINE.md`, a main-conference paper skeleton covering framing, section goals, contribution structure, figure/table plan, and reviewer-facing checklist.
+- 2026-04-14: Corrected SMACv2 reward mixing to match the experiment spec exactly by separating role-specific shaping from the shared team reward and computing the final reward as `0.8 * individual + 0.2 * team_reward`.
