@@ -70,7 +70,12 @@ class CooperativeGridEnv(gym.Env):
         self.hold_count = 0  # consecutive steps team holds 2+ zones
 
         # Agent positions (row, col), one per role
-        self.agent_pos = self._rng.integers(4, self.grid_size - 4, size=(self.n_agents, 2)).astype(np.float32)
+        # Spawn agents clustered near a random zone center so they can learn
+        # cooperation from the start rather than being picked off individually.
+        anchor_zone = self.zone_centers[self._rng.integers(0, self.n_zones)]
+        offsets = self._rng.integers(-3, 4, size=(self.n_agents, 2))
+        raw = anchor_zone[np.newaxis, :] + offsets
+        self.agent_pos = np.clip(raw, 1, self.grid_size - 2).astype(np.float32)
         self.agent_vel = np.zeros((self.n_agents, 2), dtype=np.float32)
         self.agent_health = np.full(self.n_agents, MAX_HEALTH, dtype=np.float32)
         self.agent_alive = np.ones(self.n_agents, dtype=bool)
