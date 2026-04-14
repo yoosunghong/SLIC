@@ -40,7 +40,11 @@ Action mapping (our 6 → SMACv2 discrete):
   5 → attack nearest enemy (first available attack action ≥ 6)
        For Medivac (no ground attack), falls back to stop.
 """
+import os
 import numpy as np
+
+# SC2 is installed at a non-default path on this machine.
+os.environ.setdefault("SC2PATH", "D:/StarCraft II")
 
 try:
     from smacv2.env import StarCraft2Env

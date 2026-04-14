@@ -17,6 +17,9 @@ env/
 !smacv2_poc/env/
 !smacv2_poc/env/__init__.py
 !smacv2_poc/env/smac_wrapper.py
+!validation_poc/env/
+!validation_poc/env/__init__.py
+!validation_poc/env/cooperative_grid.py
 
 # Results (large files)
 results/checkpoints/
