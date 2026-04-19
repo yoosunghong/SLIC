@@ -3,131 +3,96 @@
 
 \subsection{Environment}
 
-We use a custom 3-role cooperative environment built on MiniGrid~\cite{minigrid}, consisting of a 15$\times$15 grid with three capture zones (top-left, top-right, center) and two moving enemies. Three agents are assigned one of three fixed roles: \textbf{Strike} (ranged DPS), \textbf{Vanguard} (melee tank), and \textbf{Support} (healer). Episodes run for 200 steps. The win condition requires the team to capture and hold 2 of 3 zones for 40 consecutive steps.
+We evaluate on a custom SMACv2 scenario using three Terran unit types as heterogeneous role proxies: Marine (\textbf{Strike}, ranged DPS), Marauder (\textbf{Vanguard}, melee frontline), and Medivac (\textbf{Support}, healer). The team of three agents operates against opponents on a generation map with 10 total agents per side. Episodes terminate at the environment's default step limit; win rate is the primary metric.
+
+SMACv2 does not natively support pre-defined role labels in observations. We inject role identity as a 3-dimensional unit-type one-hot into both the agent's own token and each ally token, preserving the structural condition required for role-conditioned Query/Key routing (Section~\ref{sec:theory}).
 
 \subsection{Entity-Centric Observation}
 
-Each agent receives a 63-dimensional entity-centric observation structured as four named token groups:
+Each agent receives a 65-dimensional entity-centric observation structured as four named token groups:
 
-\begin{table}[h]
-\centering
-\caption{Observation layout (63 dimensions). Role one-hot uses [1,0,0]=Strike, [0,1,0]=Vanguard, [0,0,1]=Support.}
-\label{tab:obs}
-\begin{tabular}{llcp{6cm}}
-\toprule
-Token & Dims & Size & Content \\
-\midrule
-\texttt{self\_tok}   & [0:8]   & 8  & pos(2) + vel(2) + health(1) + role\_onehot(3) \\
-\texttt{ally\_tok}   & [8:24]  & 16 & 2 allies $\times$ 8: rel\_pos(2) + health(1) + alive(1) + role\_onehot(3) + padding(1) \\
-\texttt{enemy\_tok}  & [24:40] & 16 & 2 enemies $\times$ 8: rel\_pos(2) + health(1) + alive(1) + class\_conf(3) + padding(1) \\
-\texttt{zone\_tok}   & [40:58] & 18 & 3 zones $\times$ 6: rel\_pos(2) + occupancy(1) + progress(1) + assigned(1) + value(1) \\
-\texttt{ally\_mask}  & [58:60] & 2  & 0=valid, 1=padded (per ally slot) \\
-\texttt{enemy\_mask} & [60:62] & 2  & 0=valid, 1=padded \\
-\texttt{zone\_mask}  & [62:63] & 1  & 0=valid, 1=padded (zone 3 padding indicator) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Critical design choice:} The role one-hot appears in both \texttt{self\_tok} and each \texttt{ally\_tok} slot. This dual placement is load-bearing for the theoretical mechanism: it allows role labels to condition both the Query (from \texttt{self\_tok}) and the Key/Value (from \texttt{ally\_tok}) projections in cross-attention, enabling role-to-role relational routing.
-
-\subsection{Reward Functions}
-
-Role-specific rewards are mixed with a team component at $\alpha=0.2$:
-\[
-r_{\text{final}} = 0.8 \cdot r_{\text{individual}} + 0.2 \cdot \bar{r}_{\text{team}}
-\]
-
-Individual reward components per role:
-
-\begin{table}[h]
-\centering
-\caption{Role-specific reward shaping.}
-\label{tab:rewards}
-\begin{tabular}{lp{9cm}}
-\toprule
-Role & Reward components \\
-\midrule
-\textbf{Strike}   & Approach bonus (scaled by distance to nearest zone) + capture bonus + too-close penalty ($-$0.1 when dist $<$ 2 to enemy) \\
-\textbf{Vanguard} & Approach bonus + capture bonus + melee bonus ($+$0.1 per enemy within dist $<$ 2 in zone) \\
-\textbf{Support}  & Approach-to-lowest-HP-ally bonus + heal bonus + boost bonus ($+$0.5 per nearby occupied zone within radius 3.0) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Policy Architectures}
-
-All five conditions share the same observation format and action space (6 discrete actions). They differ in architectural structure and whether role labels are present.
-
-\subsubsection{Condition 1 — Full (Proposed)}
-
-The full architecture processes each entity set through a two-stage attention pipeline:
-
-\paragraph{Stage 1: Intra-Set Self-Attention.}
-Each entity set is first encoded by a linear projection ($\mathbb{R}^{d_{\text{in}}} \to \mathbb{R}^{64}$), then processed by an intra-set multi-head self-attention block:
 \begin{align*}
-e_{\text{ally}}^{(i)} &= \text{Linear}(8, 64)(x_{\text{ally}}^{(i)}) \\
-\tilde{e}_{\text{ally}} &= \text{LayerNorm}\left(e_{\text{ally}} + \text{MHA}_{\text{ally}}(e_{\text{ally}}, e_{\text{ally}}, e_{\text{ally}})\right)
+\texttt{self\_tok}   &\in \mathbb{R}^{8}  && \text{position(2), health(1), shield(1), role\_onehot(3), pad(1)} \\
+\texttt{ally\_tok}   &\in \mathbb{R}^{16} && \text{2 allies} \times \text{8: rel\_pos(2), health(1), shield(1), role\_onehot(3), alive(1)} \\
+\texttt{enemy\_tok}  &\in \mathbb{R}^{16} && \text{2 enemies} \times \text{8: rel\_pos(2), health(1), shield(1), type\_conf(3), alive(1)} \\
+\texttt{zone\_tok}   &\in \mathbb{R}^{18} && \text{3 zones} \times \text{6: rel\_pos(2), owned(1), contest(1), value(1), pad(1)} \\
+\texttt{masks}       &\in \mathbb{R}^{7}  && \text{validity flags for ally/enemy/zone slots}
 \end{align*}
-Analogous blocks are applied to enemy and zone sets. Padding masks prevent attention over invalid slots; a \texttt{\_safe\_mask()} guard forces-unmasks slot 0 when all slots are padded to prevent NaN.
 
-\paragraph{Stage 2: Cross-Attention.}
-The encoded \texttt{self\_tok} embedding serves as the Query for three separate cross-attention heads\textemdash one per entity set (ally, enemy, zone):
+Role one-hots occupy 3 dimensions in \texttt{self\_tok[4:7]} and in each ally slot (\texttt{ally\_tok[12:15]}, \texttt{ally\_tok[20:23]}). This placement is structural: the attention mechanism encodes these into Q (from self) and K/V (from ally), creating a direct role-pair routing path (Section~\ref{sec:theory}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/slic_architecture}
+  \caption{SLIC architecture (Condition~1 --- Full). Four entity token groups are
+    encoded by dedicated linear layers. Intra-Set Self-Attention contextualises each
+    entity set independently. Cross-Attention uses the self-embedding as query and
+    each set as key/value. Red arrows highlight the role-conditioned routing path:
+    the role one-hot in \texttt{self\_tok} is projected into Q, while the role
+    one-hots in \texttt{ally\_tok} are projected into K/V, enabling structured
+    role-pair attention routing without architectural hand-coding.}
+  \label{fig:architecture}
+\end{figure}
+
+\subsection{Policy Architecture}
+
+We implement five ablation conditions as swappable policy classes sharing the same interface. All take the 65-dim observation and produce a 6-dimensional action distribution. Conditions 1, 2, 3, and 5 use three independent policies (one per role); Condition 4 uses a single shared policy for all three roles.
+
+\paragraph{Condition 1 --- Full (proposed).}
+Encodes each entity group with a dedicated linear layer (dim 64), applies Intra-Set Self-Attention to each set (2-head MultiheadAttention with residual and LayerNorm), then applies Cross-Attention with the self-embedding as query and each set as key/value. The output MLP concatenates all three context vectors plus the self-embedding:
 \[
-\text{ctx}_{\text{ally}} = \text{MHA}_{\text{cross-ally}}(e_{\text{self}},\, \tilde{e}_{\text{ally}},\, \tilde{e}_{\text{ally}})
+\pi = \text{MLP}([\mathbf{c}_{\text{ally}}, \mathbf{c}_{\text{enemy}}, \mathbf{c}_{\text{zone}}, \mathbf{e}_{\text{self}}]) \in \mathbb{R}^{128 \to \text{action\_dim}}
 \]
 
-\paragraph{Output MLP.}
-The three context vectors and the self embedding are concatenated and passed through a two-layer MLP:
-\[
-a = \text{Linear}(128, |\mathcal{A}|)\left(\text{ReLU}\left(\text{Linear}(64 \cdot 3 + 64,\, 128)\left([\text{ctx}_{\text{ally}};\, \text{ctx}_{\text{enemy}};\, \text{ctx}_{\text{zone}};\, e_{\text{self}}]\right)\right)\right)
-\]
+\paragraph{Condition 2 --- No Self-Attn.}
+Removes the three Intra-Set Self-Attention blocks. Encoded ally/enemy/zone tensors feed directly into Cross-Attention, eliminating intra-set relational structure while retaining cross-set routing.
 
-\subsubsection{Condition 2 — No Self-Attention}
+\paragraph{Condition 3 --- Role+MLP.}
+Removes all attention. A flat MLP processes the full 65-dim observation: $\text{Linear}(65, 256) \to \text{ReLU} \to \text{Linear}(256, 128) \to \text{ReLU} \to \text{Linear}(128, \text{action\_dim})$. Role one-hots are present in the input vector but processed identically to all other features.
 
-Same as Condition~1, but the three intra-set self-attention blocks are removed. Encoded embeddings feed directly into cross-attention without intra-set contextualization. This ablation isolates the contribution of intra-set relational structure.
+\paragraph{Condition 4 --- No-RoleLabel (shared policy).}
+Same architecture as Condition 1, but role one-hot dimensions are zeroed in both \texttt{self\_tok[4:7]} and all \texttt{ally\_tok} role dims before encoding. A single shared policy handles all three roles; role-specific rewards still apply during training. This is the meaningful isolation of label contribution: with a shared policy, the network cannot specialize by trajectory distribution alone.
 
-\subsubsection{Condition 3 — Role Label + Pure MLP}
+\paragraph{Condition 5 --- Flat-MLP baseline.}
+Same as Condition 3 with role one-hots zeroed. No labels, no attention. This is the performance floor.
 
-All attention is removed. The full 63-dimensional observation is flattened and processed by a three-layer MLP:
-\[
-a = \text{Linear}(128, |\mathcal{A}|)\left(\text{ReLU}\left(\text{Linear}(256, 128)\left(\text{ReLU}\left(\text{Linear}(63, 256)(o)\right)\right)\right)\right)
-\]
-Role labels remain present in the input. This is the primary comparison condition for the structural routing claim.
-
-\subsubsection{Condition 4 — No Role Label (Shared Policy)}
-
-Same architecture as Condition~1, but role one-hot dimensions are zeroed in both \texttt{self\_tok} and all \texttt{ally\_tok} slots before any encoding. A single shared policy network handles all three roles. Role-specific rewards still apply during training. This condition isolates the contribution of role label information: with independent policies, role differentiation arises trivially from trajectory separation; only a shared policy makes label removal a meaningful test.
-
-\subsubsection{Condition 5 — Flat MLP Baseline}
-
-Same as Condition~3 but role one-hot dimensions are also zeroed. Pure flat MLP, no labels, no attention.
+\paragraph{Padding safety.}
+All attention computations apply \texttt{key\_padding\_mask} from the observation masks. A safety function force-unmasks slot~0 if all slots are masked, preventing NaN in softmax.
 
 \subsection{Training Setup}
 
-We use Multi-Agent PPO (MAPPO)~\cite{yu2022mappo} with a centralized critic taking the concatenated observations of all agents ($63 \times 3 = 189$ dims). All hyperparameters are fixed across all five conditions:
+All conditions use MAPPO~\cite{mappo} with the following hyperparameters, kept constant across all conditions:
 
-\begin{table}[h]
-\centering
-\caption{Training hyperparameters (identical across all conditions).}
-\label{tab:hparams}
-\begin{tabular}{lc}
+\begin{center}
+\begin{tabular}{ll}
 \toprule
 Hyperparameter & Value \\
 \midrule
-Algorithm         & MAPPO \\
-Total steps       & 2,000,000 \\
-Batch size        & 512 \\
-Mini-batch size   & 64 \\
-PPO epochs/update & 4 \\
+Algorithm & MAPPO \\
+Total steps & 2M per seed \\
+Seeds & 3 \\
+GAE $\lambda$ & 0.95 \\
 Discount $\gamma$ & 0.99 \\
-GAE $\lambda$     & 0.95 \\
 PPO clip $\varepsilon$ & 0.2 \\
 Entropy coefficient & 0.01 \\
-Learning rate     & $3 \times 10^{-4}$ (Adam) \\
-Max grad norm     & 0.5 \\
-Seeds             & 3 \\
+Optimizer & Adam, lr $= 3 \times 10^{-4}$ \\
+Batch size & 512 \\
+Mini-batch size & 64 \\
+PPO epochs per update & 4 \\
+Centralized critic & MLP on concatenated obs ($65 \times 3 = 195$ dims) \\
+Checkpoint interval & every 200k steps \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-Conditions 1, 2, 3, and 5 use three independent role-specific policies; each network is updated exclusively on trajectories from its assigned role. Condition~4 uses a single shared policy updated on all trajectories. Checkpoints are saved every 200k steps; win rate is evaluated over 10 episodes every 10k steps.
+Independent policies (Conditions 1--3, 5) are updated only on trajectories from their respective role. The shared policy (Condition 4) is updated on all trajectories.
+
+\subsection{Reward Structure}
+
+Role-specific rewards encode the behavioral mandate of each unit type:
+\begin{itemize}
+  \item \textbf{Strike (Marine):} Approach bonus toward enemies + attack bonus + too-close penalty (range enforcement).
+  \item \textbf{Vanguard (Marauder):} Approach bonus + melee engagement bonus when in close combat range.
+  \item \textbf{Support (Medivac):} Approach-to-lowest-HP-ally bonus + heal event bonus + rear-arc positioning bonus.
+\end{itemize}
+Team reward is mixed with individual reward: $r_{\text{final}} = 0.8 \cdot r_{\text{individual}} + 0.2 \cdot \bar{r}_{\text{team}}$.

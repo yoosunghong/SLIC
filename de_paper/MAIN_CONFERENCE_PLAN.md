@@ -148,6 +148,8 @@ Ensure the claim survives against plausible reviewer alternatives.
    - MAPPO vanilla
    - QMIX or equivalent value-factorization baseline
    - ROMA or closest role-discovery prior
+   - RODE (role decomposition via trajectory clustering) — must differentiate from this
+   - DOP (directed optimization for role specialization) — must differentiate from this
 
 ### Reviewer questions these baselines answer
 
@@ -155,6 +157,7 @@ Ensure the claim survives against plausible reviewer alternatives.
 - Is the gain just any attention?
 - Is the gain just any entity-centric encoding?
 - Is the gain redundant if a role-discovery method is used?
+- How does SLIC differ from RODE's role decomposition and DOP's specialization objective?
 
 ---
 
@@ -175,8 +178,9 @@ Show that the mechanism is not an artifact of one handcrafted task.
    - preserves role heterogeneity but changes map biases
 
 3. Public benchmark:
-   - SMACv2 heterogeneous unit scenario
+   - SMACv2 heterogeneous unit scenario (**DONE** — Terran 3-agent, 3 seeds, 2M steps)
    - use unit type as role proxy
+   - **Still needed:** a second SMACv2 scenario (different unit composition or map) to verify routing patterns are not Terran-specific
 
 ### Minimum main-track requirement
 
@@ -239,10 +243,25 @@ Present the paper as a general contribution to heterogeneous cooperative MARL, n
    - label-conditioned set-attention architecture,
    - mechanistic routing analysis protocol,
    - causal validation of routing usefulness.
+4. Complete Figure 1 (architecture diagram): must show the four entity encoders, Intra-Set Self-Attention blocks, Cross-Attention blocks, and output MLP, with role one-hot positions in self_tok and ally_tok highlighted to make the Q/K routing path visible. Currently a placeholder — this is the most visible incompleteness signal to reviewers.
+5. Strengthen related work differentiation from recent role-based MARL papers:
+   - RODE: decomposes roles via trajectory clustering and assigns role-conditioned sub-policies. SLIC differs by conditioning on *pre-defined labels* rather than discovering roles, and by targeting the routing *mechanism* rather than role emergence.
+   - DOP: specializes policies via diversity objectives. SLIC differs in that role differentiation is structurally enforced through Q/K label conditioning, not encouraged through a loss term.
+   - The differentiation must be explicit in the Related Work section and summarized in a table or bullet list that a reviewer skimming in 5 minutes can absorb.
+
+### Contribution framing: go beyond "analysis framework"
+
+Reviewers at ICML/NeurIPS may dismiss "analysis framework" as insufficient novelty. The contribution should be framed as:
+
+1. A *design principle*: role labels in both Q and K/V create a direct structural path for role-pair routing that MLP cannot replicate.
+2. An *architecture instantiation*: SLIC is a concrete, reproducible implementation of that principle.
+3. An *analysis protocol*: the routing matrix, Δ_max, and gradient attribution together make the principle testable and falsifiable across environments and architectures.
+
+This framing positions the paper as proposing a generalizable inductive bias with a verification toolkit, not just an analytical exercise on one environment.
 
 ### Suggested contribution statement
 
-This paper contributes a structural hypothesis, an architecture that instantiates it, and an analysis toolkit that makes the hypothesis testable across environments.
+This paper contributes a structural design principle (role labels in Q and K/V create role-pair routing), an architecture that instantiates it (SLIC), and an analysis protocol that makes the principle testable and falsifiable — demonstrated causally through intervention studies and across at least two environments.
 
 ---
 
@@ -259,7 +278,7 @@ This paper contributes a structural hypothesis, an architecture that instantiate
 | Core ablations | Conditions 1 to 5 |
 | Capacity controls | Parameter-matched MLP, role-embedding MLP |
 | Attention controls | No-role attention, pooled set encoder |
-| Benchmark baselines | MAPPO, QMIX, ROMA |
+| Benchmark baselines | MAPPO, QMIX, ROMA, RODE, DOP |
 
 | Evaluation Type | Outputs |
 | :--- | :--- |
@@ -323,10 +342,31 @@ If the answer is yes to all three, the paper reads as a full mechanism paper rat
 
 ---
 
+## Completion Status (updated 2026-04-19)
+
+### Completed
+
+- SMACv2 5-condition training: 3 seeds × 2M steps. Win rate hierarchy confirmed: Cond1 0.80 > Cond2 0.73 > Cond4 0.50 > Cond3 0.43 > Cond5 0.23.
+- Track 2 analysis: routing matrix (multi-seed mean ± std), Δ_max per role, MLP gradient attribution, slot-ordering bias verification.
+- Initial paper draft: all 7 sections written in `de_paper/paper/` with actual SMACv2 numbers. Mechanism-first framing adopted.
+- Claim reframing: specific behavioral predictions demoted to findings; structural routing-structure claim elevated as primary.
+
+### Not yet started (priority order based on reviewer feedback)
+
+1. **Figure 1** — architecture diagram replacing current placeholder (Workstream F, highest visibility)
+2. **Increase to 5+ seeds** — reduces routing matrix std credibility gap (Workstream A)
+3. **Causal intervention suite** — role-label shuffle, slot masking, counterfactual swap (Workstream B, required for mechanism claim)
+4. **Second environment** — at least one additional map or benchmark scenario (Workstream D, biggest reviewer blocker)
+5. **QMIX + MAPPO vanilla + ROMA baselines** — benchmark comparisons (Workstream C)
+6. **RODE / DOP differentiation** — explicit positioning in related work (Workstream F)
+
+---
+
 ## Immediate Next Actions
 
-1. Finalize the MiniGrid PoC reporting package with seed-averaged analysis.
-2. Implement causal intervention hooks in the analysis code.
-3. Define the SMACv2 role-proxy observation format and training protocol.
-4. Add parameter-matched and role-embedding baselines.
-5. Freeze the experimental matrix before large-scale training.
+1. Draw and insert Figure 1 architecture diagram (replaces placeholder in paper.md Section 4.3).
+2. Re-run all 5 conditions with 5 seeds; regenerate routing matrix and CI tables.
+3. Implement causal intervention hooks: test-time role-label shuffle and top-attended-slot masking.
+4. Select and run a second SMACv2 scenario (different unit composition or map) to test routing reproducibility.
+5. Add RODE and DOP to related work with explicit differentiation table.
+6. Freeze the experimental matrix before large-scale additional training.

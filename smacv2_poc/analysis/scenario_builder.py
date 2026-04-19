@@ -47,7 +47,8 @@ ZONE_POSITIONS = np.array([
 def _build_obs(agent_idx: int, agent_positions: np.ndarray,
                enemy_positions: np.ndarray,
                hp: np.ndarray = None,
-               shield: np.ndarray = None) -> np.ndarray:
+               shield: np.ndarray = None,
+               ally_order: list = None) -> np.ndarray:
     """
     Construct a single 65-dim SMACv2 entity-centric obs.
 
@@ -58,6 +59,8 @@ def _build_obs(agent_idx: int, agent_positions: np.ndarray,
     enemy_positions : (2, 2) normalised positions
     hp : (3,) health ratios [0,1]; defaults to 1.0
     shield : (3,) shield ratios [0,1]; defaults to 1.0
+    ally_order : list of ally agent indices in slot order (for bias testing).
+        If None, uses default ascending order (same as training).
     """
     if hp is None:
         hp = np.ones(N_AGENTS, dtype=np.float32)
@@ -76,7 +79,9 @@ def _build_obs(agent_idx: int, agent_positions: np.ndarray,
     o[7] = 0.0  # padding
 
     # ally_tok [8:24]  2 allies × 8: rel_pos(2)+health(1)+shield(1)+unit_type_onehot(3)+alive(1)
-    ally_indices = [j for j in range(N_AGENTS) if j != agent_idx]
+    if ally_order is None:
+        ally_order = [j for j in range(N_AGENTS) if j != agent_idx]
+    ally_indices = ally_order
     for slot, j in enumerate(ally_indices):
         base = 8 + slot * 8
         rel = agent_positions[j] - pos
@@ -115,7 +120,8 @@ def _build_obs(agent_idx: int, agent_positions: np.ndarray,
     return o
 
 
-def build_scenario_obs(scenario: str, zero_role_labels: bool = False) -> dict:
+def build_scenario_obs(scenario: str, zero_role_labels: bool = False,
+                        shuffle_ally_slots: bool = False) -> dict:
     """
     Build per-role observation dicts for Clustered or Spread scenarios.
 
@@ -124,11 +130,15 @@ def build_scenario_obs(scenario: str, zero_role_labels: bool = False) -> dict:
     scenario : 'clustered' | 'spread'
     zero_role_labels : bool
         If True, zero out role one-hot in self_tok and ally_tok slots.
-        Used for Condition 4 (No-RoleLabel) analysis.
+    shuffle_ally_slots : bool
+        If True, reverse ally slot order for bias detection. Returned dict
+        also includes 'ally_slot_roles' showing which role is in which slot.
 
     Returns
     -------
     dict with keys 'strike', 'vanguard', 'support' → np.ndarray (65,)
+    If shuffle_ally_slots=True, also key 'ally_slot_roles' →
+        dict[agent_idx] = [role_idx_in_slot0, role_idx_in_slot1]
     """
     if scenario == 'clustered':
         # All agents clustered near zone 0 (top-left landmark, ~0.15, 0.15)
@@ -161,12 +171,21 @@ def build_scenario_obs(scenario: str, zero_role_labels: bool = False) -> dict:
         raise ValueError(f"Unknown scenario: '{scenario}'. Use 'clustered' or 'spread'.")
 
     obs = {}
+    actual_slot_roles = {}
     for i, role in enumerate(ROLES):
-        o = _build_obs(i, agent_positions, enemy_positions)
+        default_order = [j for j in range(N_AGENTS) if j != i]
+        if shuffle_ally_slots:
+            ally_order = list(reversed(default_order))
+        else:
+            ally_order = default_order
+        actual_slot_roles[i] = ally_order  # slot 0 = ally_order[0], slot 1 = ally_order[1]
+        o = _build_obs(i, agent_positions, enemy_positions, ally_order=ally_order)
         if zero_role_labels:
             o = _zero_role_dims(o)
         obs[role] = o
 
+    if shuffle_ally_slots:
+        obs['ally_slot_roles'] = actual_slot_roles
     return obs
 
 

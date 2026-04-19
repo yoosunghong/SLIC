@@ -63,13 +63,16 @@ def extract_attn_weights(policy, obs_np: np.ndarray, device: torch.device):
     return attn
 
 
-def compute_role_routing_matrix(policies, device: torch.device) -> np.ndarray:
+def compute_role_routing_matrix(policies, device: torch.device,
+                                 shuffle_slots: bool = False) -> np.ndarray:
     """3×3 cross-attention role-routing matrix, averaged over both scenarios."""
     matrix = np.zeros((3, 3), dtype=np.float32)
     counts = np.zeros((3, 3), dtype=np.float32)
 
     for scenario in ['clustered', 'spread']:
-        scenario_obs = build_scenario_obs(scenario)
+        scenario_obs = build_scenario_obs(scenario, shuffle_ally_slots=shuffle_slots)
+        # Use actual slot→role mapping (handles shuffled case)
+        slot_roles = scenario_obs.get('ally_slot_roles', ALLY_SLOT_ROLES)
         for i, role in enumerate(ROLES):
             attn = extract_attn_weights(policies[i], scenario_obs[role], device)
             if attn is None or 'ally_cross_attn' not in attn:
@@ -77,13 +80,71 @@ def compute_role_routing_matrix(policies, device: torch.device) -> np.ndarray:
             ca = attn['ally_cross_attn'].squeeze().cpu().numpy()
             if ca.ndim == 0:
                 ca = np.array([ca.item()])
-            for slot_idx, ally_role_idx in enumerate(ALLY_SLOT_ROLES[i]):
+            for slot_idx, ally_role_idx in enumerate(slot_roles[i]):
                 if slot_idx < len(ca):
                     matrix[i, ally_role_idx] += ca[slot_idx]
                     counts[i, ally_role_idx] += 1
 
     counts = np.where(counts == 0, 1, counts)
     return matrix / counts
+
+
+def check_slot_ordering_bias(policies, device: torch.device) -> dict:
+    """
+    Detect slot-ordering bias by comparing routing matrices with default vs
+    reversed ally slot order. If attention weights follow the slot position
+    (not the role), the two matrices will differ significantly.
+
+    Returns dict with:
+      'default_matrix'  : 3×3 routing matrix, standard slot order
+      'shuffled_matrix' : 3×3 routing matrix, reversed slot order
+      'bias_detected'   : bool — True if attention follows slot, not role
+      'slot_attn_default'  : per-agent slot weights (standard)
+      'slot_attn_shuffled' : per-agent slot weights (shuffled)
+    """
+    result = {}
+
+    # Per-agent raw slot attention weights (cross-attn to allies)
+    slot_attn_default = {}
+    slot_attn_shuffled = {}
+
+    for shuffle in [False, True]:
+        key = 'shuffled' if shuffle else 'default'
+        for scenario in ['clustered', 'spread']:
+            obs = build_scenario_obs(scenario, shuffle_ally_slots=shuffle)
+            for i, role in enumerate(ROLES):
+                attn = extract_attn_weights(policies[i], obs[role], device)
+                if attn is None or 'ally_cross_attn' not in attn:
+                    continue
+                ca = attn['ally_cross_attn'].squeeze().cpu().numpy()
+                store = slot_attn_shuffled if shuffle else slot_attn_default
+                if role not in store:
+                    store[role] = []
+                store[role].append(ca)
+
+    result['slot_attn_default'] = {r: np.mean(v, axis=0)
+                                    for r, v in slot_attn_default.items()}
+    result['slot_attn_shuffled'] = {r: np.mean(v, axis=0)
+                                     for r, v in slot_attn_shuffled.items()}
+
+    result['default_matrix'] = compute_role_routing_matrix(policies, device,
+                                                            shuffle_slots=False)
+    result['shuffled_matrix'] = compute_role_routing_matrix(policies, device,
+                                                             shuffle_slots=True)
+
+    # Bias detected if slot 0 dominates in BOTH orderings (attention stuck to position)
+    bias_flags = []
+    for role, default_ca in result['slot_attn_default'].items():
+        shuffled_ca = result['slot_attn_shuffled'].get(role)
+        if shuffled_ca is None or len(default_ca) < 2:
+            continue
+        # slot 0 dominant in default AND slot 0 still dominant in shuffled → positional bias
+        default_slot0_dominant = default_ca[0] > 0.6
+        shuffled_slot0_dominant = shuffled_ca[0] > 0.6
+        bias_flags.append(default_slot0_dominant and shuffled_slot0_dominant)
+
+    result['bias_detected'] = len(bias_flags) > 0 and sum(bias_flags) > len(bias_flags) / 2
+    return result
 
 
 def compute_delta_max(policies, device: torch.device) -> dict:
@@ -163,7 +224,27 @@ def main():
         delta_max1 = compute_delta_max(policies1, device)
         print(f'  Δmax per role (Cond1): {delta_max1}')
 
-        routing1 = compute_role_routing_matrix(policies1, device)
+        # Slot-ordering bias check (must run before finalizing routing matrix claims)
+        print('\n  --- Slot-Ordering Bias Check ---')
+        bias_result = check_slot_ordering_bias(policies1, device)
+        print(f'  Default slot attn (avg over scenarios):')
+        for role, ca in bias_result['slot_attn_default'].items():
+            print(f'    {role}: slot0={ca[0]:.3f}, slot1={ca[1]:.3f}')
+        print(f'  Shuffled slot attn (reversed ally order):')
+        for role, ca in bias_result['slot_attn_shuffled'].items():
+            print(f'    {role}: slot0={ca[0]:.3f}, slot1={ca[1]:.3f}')
+        print(f'  Routing matrix (default slot order):\n{bias_result["default_matrix"]}')
+        print(f'  Routing matrix (shuffled slot order):\n{bias_result["shuffled_matrix"]}')
+        bias_detected = bias_result['bias_detected']
+        print(f'  Slot-ordering bias detected: {bias_detected}')
+        if bias_detected:
+            print('  WARNING: Attention follows slot position, not role identity.')
+            print('           Routing matrix reflects positional artifact, not role routing.')
+        else:
+            print('  OK: Routing matrix reflects role identity (not positional artifact).')
+        print('  --- End Bias Check ---\n')
+
+        routing1 = bias_result['default_matrix']
         print(f'  Role routing matrix (Cond1):\n{routing1}')
         plot_role_routing_matrix(routing1, 'Cond1_Full_SMACv2', plots_dir)
 

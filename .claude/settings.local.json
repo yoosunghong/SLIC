@@ -24,7 +24,16 @@
       "Bash(echo \"PID seed2: $!\")",
       "Bash(echo \"PID seed1: $!\")",
       "Bash(python -m smacv2_poc.analysis.analyze_attention --cond1_ckpt smacv2_poc/results/checkpoints/cond1_seed1_step1801728.pt --cond2_ckpt smacv2_poc/results/checkpoints/cond2_seed1_step2000384.pt --cond3_ckpt smacv2_poc/results/checkpoints/cond3_seed2_step2000384.pt --results_dir smacv2_poc/results)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(python -m smacv2_poc.analysis.analyze_extended --cond1_seed0 smacv2_poc/results/checkpoints/cond1_seed0_step2000384.pt --cond1_seed1 smacv2_poc/results/checkpoints/cond1_seed1_step1801728.pt --cond1_seed2 smacv2_poc/results/checkpoints/cond1_seed2_step2000384.pt --cond4_ckpt smacv2_poc/results/checkpoints/cond4_seed1_step2000384.pt --cond5_ckpt smacv2_poc/results/checkpoints/cond5_seed1_step2000384.pt --cond3_ckpt smacv2_poc/results/checkpoints/cond3_seed2_step2000384.pt --results_dir smacv2_poc/results)",
+      "Bash(grep -E \"\\\\.\\(tex|bib|pdf|cls|sty\\)$\")",
+      "Bash(pdflatex -interaction=nonstopmode -output-directory D:/Github/SLIC/de_paper/paper D:/Github/SLIC/de_paper/paper/main.tex)",
+      "Bash(pdflatex --version)",
+      "Bash(pdflatex -interaction=nonstopmode main.tex)",
+      "Bash(echo \"exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(python de_paper/paper/figures/draw_architecture.py)",
+      "Bash(echo \"exit:$?\")"
     ]
   }
 }
