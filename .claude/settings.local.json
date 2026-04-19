@@ -17,7 +17,14 @@
       "Bash(xargs grep:*)",
       "Read(//d/Github/SLIC/**)",
       "Bash(cp \"D:\\\\Github\\\\SLIC\\\\validation_poc\\\\env\\\\__init__.py\" \"D:\\\\Github\\\\SLIC\\\\.claude\\\\worktrees\\\\gracious-curran\\\\validation_poc\\\\env\\\\__init__.py\")",
-      "Bash(cp \"D:\\\\Github\\\\SLIC\\\\validation_poc\\\\env\\\\cooperative_grid.py\" \"D:\\\\Github\\\\SLIC\\\\.claude\\\\worktrees\\\\gracious-curran\\\\validation_poc\\\\env\\\\cooperative_grid.py\")"
+      "Bash(cp \"D:\\\\Github\\\\SLIC\\\\validation_poc\\\\env\\\\cooperative_grid.py\" \"D:\\\\Github\\\\SLIC\\\\.claude\\\\worktrees\\\\gracious-curran\\\\validation_poc\\\\env\\\\cooperative_grid.py\")",
+      "Bash(python -c ':*)",
+      "Bash(python3 -c ':*)",
+      "Bash(echo \"PID seed0: $!\")",
+      "Bash(echo \"PID seed2: $!\")",
+      "Bash(echo \"PID seed1: $!\")",
+      "Bash(python -m smacv2_poc.analysis.analyze_attention --cond1_ckpt smacv2_poc/results/checkpoints/cond1_seed1_step1801728.pt --cond2_ckpt smacv2_poc/results/checkpoints/cond2_seed1_step2000384.pt --cond3_ckpt smacv2_poc/results/checkpoints/cond3_seed2_step2000384.pt --results_dir smacv2_poc/results)",
+      "Bash(pip install *)"
     ]
   }
 }

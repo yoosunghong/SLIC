@@ -60,6 +60,8 @@ def main():
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--config', type=str, default='configs/smacv2.yaml')
     parser.add_argument('--results_dir', type=str, default='results')
+    parser.add_argument('--resume', type=str, default=None,
+                        help='Path to checkpoint .pt file to resume training from')
     args = parser.parse_args()
 
     config_path = os.path.join(_ROOT, args.config)
@@ -131,14 +133,27 @@ def main():
     ckpt_interval = train_cfg['checkpoint_interval']
     n_eval = train_cfg.get('n_eval_episodes', 10)
 
-    with open(log_path, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['step', 'win_rate', 'rew_strike', 'rew_vanguard', 'rew_support', 'entropy'])
+    # Resume from checkpoint if requested
+    if args.resume:
+        step = trainer.load_checkpoint(args.resume)
+        print(f'Resumed from {args.resume} at step {step}')
+        csv_mode = 'a'  # append to existing CSV
+    else:
+        step = 0
+        csv_mode = 'w'
 
-    step = 0
-    pbar = tqdm(total=total_steps, desc=f'Cond{args.condition} Seed{args.seed}')
-    last_log = 0
-    last_ckpt = 0
+    if csv_mode == 'w':
+        with open(log_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['step', 'win_rate', 'rew_strike', 'rew_vanguard', 'rew_support', 'entropy'])
+
+    early_stop_threshold = train_cfg.get('early_stop_threshold', 1.1)  # default: disabled
+    early_stop_patience = int(train_cfg.get('early_stop_patience', 5))
+    consecutive_above = 0
+
+    pbar = tqdm(total=total_steps, initial=step, desc=f'Cond{args.condition} Seed{args.seed}')
+    last_log = step
+    last_ckpt = step
 
     while step < total_steps:
         # For condition 6, wrap env to return raw obs before our entity-centric transform
@@ -169,6 +184,21 @@ def main():
                 writer = csv.writer(f)
                 writer.writerow([step, win_rate, rew_s, rew_v, rew_sup, entropy])
             pbar.set_postfix({'win_rate': f'{win_rate:.2f}', 'ent': f'{entropy:.3f}'})
+
+            # Early stopping check
+            if win_rate >= early_stop_threshold:
+                consecutive_above += 1
+                if consecutive_above >= early_stop_patience:
+                    pbar.close()
+                    print(f'Early stop: win_rate={win_rate:.2f} >= {early_stop_threshold} '
+                          f'for {early_stop_patience} consecutive evals at step {step}.')
+                    ckpt_path = os.path.join(ckpt_dir, f'cond{args.condition}_seed{args.seed}_step{step}.pt')
+                    trainer.save_checkpoint(ckpt_path, step)
+                    env.close()
+                    print(f'Done. Checkpoint: {ckpt_path}')
+                    return
+            else:
+                consecutive_above = 0
 
         if step - last_ckpt >= ckpt_interval:
             last_ckpt = step

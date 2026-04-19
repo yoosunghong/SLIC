@@ -9,7 +9,7 @@ Usage:
 
 Identical logic to validation_poc/analysis/analyze_attention.py except:
   - Uses smacv2_poc's scenario_builder (same interface, SMACv2 coordinates)
-  - Reports SMACv2-specific role names (Stalker/Zealot/Colossus)
+  - Reports SMACv2-specific role names (Marine/Marauder/Medivac — Terran)
 """
 import argparse
 import os
@@ -35,9 +35,9 @@ from smacv2_poc.analysis.visualize import (
 )
 
 ROLE_DISPLAY = {
-    'strike':   'Strike (Stalker)',
-    'vanguard': 'Vanguard (Zealot)',
-    'support':  'Support (Colossus)',
+    'strike':   'Strike (Marine)',
+    'vanguard': 'Vanguard (Marauder)',
+    'support':  'Support (Medivac)',
 }
 
 
@@ -146,7 +146,7 @@ def main():
     routing1 = None
 
     if args.cond1_ckpt and os.path.exists(args.cond1_ckpt):
-        print('\n--- Condition 1 (Full — Self-Attn + Cross-Attn) ---')
+        print('\n--- Condition 1 (Full - Self-Attn + Cross-Attn) ---')
         policies1 = load_condition(1, args.cond1_ckpt, device, args.obs_dim, args.action_dim)
 
         clustered_obs = build_scenario_obs('clustered')
@@ -237,11 +237,11 @@ def main():
         print(f'[{status}] {label}')
 
     report('vanguard_highest_delta',
-           'Zealot (Vanguard) Δmax is highest among all roles')
+           'Vanguard (Marauder) Δmax is highest among all roles')
     report('support_lowest_delta',
-           'Colossus (Support) Δmax is lowest among all roles')
+           'Support (Medivac) Δmax is lowest among all roles')
     report('strike_support_routing',
-           'Stalker→Colossus routing weight > Stalker→Zealot routing weight')
+           'Strike (Marine)→Support (Medivac) routing weight > Strike→Vanguard (Marauder) routing weight')
     report('mlp_routing_weaker',
            'Role routing is weaker/unstructured in Condition 3 (MLP)')
     print('[SKIP] No_RoleLabel win rate < Full win rate by >5pp  '

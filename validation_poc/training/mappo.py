@@ -62,6 +62,7 @@ class MAPPOTrainer:
         returns = torch.tensor(buf.returns, dtype=torch.float32, device=self.device)
 
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-8)
 
         n = len(obs)
         p_losses, v_losses, entropies = [], [], []

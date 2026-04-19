@@ -100,12 +100,12 @@ ZONE_POSITIONS_NORM = np.array([
 # ---------------------------------------------------------------------------
 # Reward shaping weights
 # ---------------------------------------------------------------------------
-APPROACH_BONUS          = 0.005   # all combat roles: reward for closing on enemies
-ATTACK_BONUS            = 0.05    # all combat roles: reward for issuing attack action
+APPROACH_BONUS          = 0.02    # all combat roles: reward for closing on enemies
+ATTACK_BONUS            = 0.05    # combat roles: reward for attacking when in range
 FRONTLINE_BONUS         = 0.05    # Marauder: bonus for being within frontline range
 TOO_CLOSE_PENALTY       = 0.02    # Marine: penalty for being inside melee range
 SUPPORT_PROXIMITY_BONUS = 0.01    # Medivac: reward per unit of distance closed to target
-HEAL_RANGE_BONUS        = 0.03    # Medivac: bonus for being within heal range of target
+HEAL_RANGE_BONUS        = 0.05    # Medivac: bonus for being within heal range of target
 REAR_PENALTY            = 0.02    # Medivac: penalty for wandering into enemy contact
 TEAM_ALPHA              = 0.2
 
@@ -583,8 +583,10 @@ class SMACWrapper:
                     # Penalty for entering melee range (Marine should kite)
                     if d < MARINE_TOO_CLOSE:
                         rewards[role_idx] -= TOO_CLOSE_PENALTY
-                if int(actions[role_idx]) == 5:
-                    rewards[role_idx] += ATTACK_BONUS
+                if int(actions[role_idx]) == 5 and alive_enemy_pos:
+                    nearest_d = min(_dist(pos, ep) for ep in alive_enemy_pos)
+                    if nearest_d <= MARINE_ATTACK_RANGE:
+                        rewards[role_idx] += ATTACK_BONUS
 
             elif role_idx == 1:
                 # ---- Vanguard (Marauder) — frontline, close in and attack ----
@@ -595,8 +597,10 @@ class SMACWrapper:
                     # Extra bonus for being in frontline contact range
                     if d < MARAUDER_FRONT_RANGE:
                         rewards[role_idx] += FRONTLINE_BONUS
-                if int(actions[role_idx]) == 5:
-                    rewards[role_idx] += ATTACK_BONUS
+                if int(actions[role_idx]) == 5 and alive_enemy_pos:
+                    nearest_d = min(_dist(pos, ep) for ep in alive_enemy_pos)
+                    if nearest_d <= MARAUDER_FRONT_RANGE:
+                        rewards[role_idx] += ATTACK_BONUS
 
             elif role_idx == 2:
                 # ---- Support (Medivac) — healer, track lowest-HP ally ----
