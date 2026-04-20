@@ -1,8 +1,47 @@
 """All plot generation for Track 2 analysis."""
 import os
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# ── Style ──────────────────────────────────────────────────────────────────
+# Wong (2011) color-blind-safe palette
+CB_COLORS = ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442']
+
+MARKERS    = ['o', 's', '^', 'd', 'x']
+LINESTYLES = ['-', '--', '-.', ':', (0, (3, 1, 1, 1))]
+
+
+def _apply_style():
+    try:
+        plt.style.use('seaborn-v0_8-paper')
+    except OSError:
+        try:
+            plt.style.use('bmh')
+        except OSError:
+            pass
+    plt.rcParams.update({
+        'axes.labelsize':   12,
+        'xtick.labelsize':  10,
+        'ytick.labelsize':  10,
+        'legend.fontsize':  10,
+        'text.usetex':      False,
+        'mathtext.fontset': 'cm',
+    })
+
+
+_apply_style()
+
+
+def _savefig(fig, path_stem: str) -> str:
+    """Save as PDF (primary) and PNG at 300 dpi. Returns PDF path."""
+    pdf_path = path_stem + '.pdf'
+    png_path = path_stem + '.png'
+    fig.savefig(pdf_path, bbox_inches='tight')
+    fig.savefig(png_path, dpi=300, bbox_inches='tight')
+    return pdf_path
 
 
 def plot_self_attn_heatmap(weights_clustered: np.ndarray, weights_spread: np.ndarray,
@@ -12,16 +51,17 @@ def plot_self_attn_heatmap(weights_clustered: np.ndarray, weights_spread: np.nda
     Saves side-by-side heatmap + difference map.
     """
     os.makedirs(save_dir, exist_ok=True)
+    _apply_style()
     diff = weights_clustered - weights_spread
 
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-    titles = ['Clustered', 'Spread', 'Difference (C-S)']
+    titles = ['Clustered', 'Spread', r'Difference ($C - S$)']
     data = [weights_clustered, weights_spread, diff]
-    cmaps = ['Blues', 'Blues', 'RdBu_r']
+    cmaps = ['Blues', 'Blues', 'PuOr']
 
     for ax, d, title, cmap in zip(axes, data, titles, cmaps):
         vmax = max(abs(d).max(), 0.01)
-        vmin = -vmax if cmap == 'RdBu_r' else 0
+        vmin = -vmax if cmap == 'PuOr' else 0
         sns.heatmap(d, ax=ax, cmap=cmap, vmin=vmin, vmax=vmax,
                     annot=True, fmt='.3f', cbar=True,
                     xticklabels=[f'Ally{k}' for k in range(d.shape[1])],
@@ -31,10 +71,10 @@ def plot_self_attn_heatmap(weights_clustered: np.ndarray, weights_spread: np.nda
         ax.set_ylabel('Query')
 
     plt.tight_layout()
-    fname = os.path.join(save_dir, f'self_attn_heatmap_{role_name.lower()}.png')
-    plt.savefig(fname, dpi=150, bbox_inches='tight')
+    stem = os.path.join(save_dir, f'self_attn_heatmap_{role_name.lower()}')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {fname}')
+    print(f'Saved: {saved}  (+.png)')
 
 
 def plot_role_routing_matrix(routing_matrix: np.ndarray, condition_name: str, save_dir: str):
@@ -42,6 +82,7 @@ def plot_role_routing_matrix(routing_matrix: np.ndarray, condition_name: str, sa
     routing_matrix: (3, 3) — rows=agent role, cols=attended ally role
     """
     os.makedirs(save_dir, exist_ok=True)
+    _apply_style()
     fig, ax = plt.subplots(figsize=(5, 4))
     sns.heatmap(routing_matrix, ax=ax, cmap='YlOrRd', vmin=0, vmax=routing_matrix.max(),
                 annot=True, fmt='.3f', cbar=True,
@@ -51,10 +92,11 @@ def plot_role_routing_matrix(routing_matrix: np.ndarray, condition_name: str, sa
     ax.set_xlabel('Attended Ally Role')
     ax.set_ylabel('Agent Role')
     plt.tight_layout()
-    fname = os.path.join(save_dir, f'role_routing_matrix_{condition_name.lower().replace(" ", "_")}.png')
-    plt.savefig(fname, dpi=150, bbox_inches='tight')
+    stem = os.path.join(save_dir,
+                        f'role_routing_matrix_{condition_name.lower().replace(" ", "_")}')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {fname}')
+    print(f'Saved: {saved}  (+.png)')
 
 
 def plot_delta_max_comparison(delta_max_cond1: dict, delta_max_cond2: dict, save_dir: str):
@@ -62,6 +104,7 @@ def plot_delta_max_comparison(delta_max_cond1: dict, delta_max_cond2: dict, save
     delta_max_*: dict with keys 'strike', 'vanguard', 'support'
     """
     os.makedirs(save_dir, exist_ok=True)
+    _apply_style()
     roles = ['strike', 'vanguard', 'support']
     x = np.arange(len(roles))
     width = 0.35
@@ -70,18 +113,22 @@ def plot_delta_max_comparison(delta_max_cond1: dict, delta_max_cond2: dict, save
     vals2 = [delta_max_cond2.get(r, 0.0) for r in roles]
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    ax.bar(x - width / 2, vals1, width, label='Cond1 (Full)', color='steelblue')
-    ax.bar(x + width / 2, vals2, width, label='Cond2 (No Self-Attn)', color='tomato')
+    bars1 = ax.bar(x - width / 2, vals1, width,
+                   label='Cond1 (Full)', color=CB_COLORS[0],
+                   hatch='//', edgecolor='white')
+    bars2 = ax.bar(x + width / 2, vals2, width,
+                   label='Cond2 (No Self-Attn)', color=CB_COLORS[1],
+                   hatch='xx', edgecolor='white')
     ax.set_xticks(x)
     ax.set_xticklabels([r.capitalize() for r in roles])
-    ax.set_ylabel('Δmax (formation sensitivity)')
+    ax.set_ylabel(r'$\Delta_{\max}$ (formation sensitivity)')
     ax.set_title('Formation Sensitivity by Role and Condition')
     ax.legend()
     plt.tight_layout()
-    fname = os.path.join(save_dir, 'delta_max_comparison.png')
-    plt.savefig(fname, dpi=150, bbox_inches='tight')
+    stem = os.path.join(save_dir, 'delta_max_comparison')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {fname}')
+    print(f'Saved: {saved}  (+.png)')
 
 
 def plot_win_rate_curves(results_dir: str, save_dir: str):
@@ -90,8 +137,14 @@ def plot_win_rate_curves(results_dir: str, save_dir: str):
     import glob
 
     os.makedirs(save_dir, exist_ok=True)
-    condition_names = {1: 'Full', 2: 'No Self-Attn', 3: 'Role+MLP', 4: 'No Role Label', 5: 'Flat MLP'}
-    colors = ['steelblue', 'tomato', 'green', 'purple', 'orange']
+    _apply_style()
+    condition_names = {
+        1: 'Full',
+        2: 'No Self-Attn',
+        3: 'Role+MLP',
+        4: 'No Role Label',
+        5: 'Flat MLP',
+    }
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -100,7 +153,7 @@ def plot_win_rate_curves(results_dir: str, save_dir: str):
         files = glob.glob(pattern)
         if not files:
             continue
-        all_data = {}
+        all_data: dict = {}
         for fpath in files:
             with open(fpath) as f:
                 reader = csv.DictReader(f)
@@ -113,13 +166,16 @@ def plot_win_rate_curves(results_dir: str, save_dir: str):
         if not all_data:
             continue
         steps = sorted(all_data.keys())
-        means = [np.mean(all_data[s]) for s in steps]
-        stds = [np.std(all_data[s]) for s in steps]
-        means = np.array(means)
-        stds = np.array(stds)
-        color = colors[cond - 1]
-        ax.plot(steps, means, label=f'Cond{cond}: {condition_names[cond]}', color=color)
-        ax.fill_between(steps, means - stds, means + stds, alpha=0.2, color=color)
+        means = np.array([np.mean(all_data[s]) for s in steps])
+        stds  = np.array([np.std(all_data[s])  for s in steps])
+        color = CB_COLORS[cond - 1]
+        marker = MARKERS[cond - 1]
+        ls     = LINESTYLES[cond - 1]
+        label  = f'Cond{cond}: {condition_names[cond]}'
+        markevery = max(1, len(steps) // 10)
+        ax.plot(steps, means, label=label, color=color,
+                linestyle=ls, marker=marker, markevery=markevery, markersize=5)
+        ax.fill_between(steps, means - stds, means + stds, alpha=0.15, color=color)
 
     ax.set_xlabel('Environment Steps')
     ax.set_ylabel('Win Rate')
@@ -127,26 +183,33 @@ def plot_win_rate_curves(results_dir: str, save_dir: str):
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    fname = os.path.join(save_dir, 'win_rate_curves.png')
-    plt.savefig(fname, dpi=150, bbox_inches='tight')
+    stem = os.path.join(save_dir, 'win_rate_curves')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {fname}')
+    print(f'Saved: {saved}  (+.png)')
 
 
-def plot_gradient_attribution(role_name: str, spatial_grad: float, role_grad: float, save_dir: str):
+def plot_gradient_attribution(role_name: str, spatial_grad: float, role_grad: float,
+                               save_dir: str):
     """Bar chart comparing spatial vs role gradient magnitude."""
     os.makedirs(save_dir, exist_ok=True)
+    _apply_style()
     fig, ax = plt.subplots(figsize=(5, 4))
     categories = ['Spatial features', 'Role one-hot']
     values = [spatial_grad, role_grad]
-    bars = ax.bar(categories, values, color=['steelblue', 'tomato'])
-    ax.set_ylabel('Mean |gradient|')
-    ax.set_title(f'Gradient Attribution — {role_name} (Cond3 MLP)')
-    for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.001,
+    hatches = ['//', 'xx']
+    for i, (cat, val, hatch, color) in enumerate(
+            zip(categories, values, hatches, [CB_COLORS[0], CB_COLORS[1]])):
+        bar = ax.bar(i, val, color=color, hatch=hatch, edgecolor='white', label=cat)
+        ax.text(bar[0].get_x() + bar[0].get_width() / 2,
+                bar[0].get_height() + 0.001,
                 f'{val:.4f}', ha='center', va='bottom', fontsize=10)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(categories)
+    ax.set_ylabel(r'Mean $|\partial \mathrm{logit} / \partial x|$')
+    ax.set_title(f'Gradient Attribution — {role_name} (Cond3 MLP)')
     plt.tight_layout()
-    fname = os.path.join(save_dir, f'gradient_attribution_{role_name.lower()}.png')
-    plt.savefig(fname, dpi=150, bbox_inches='tight')
+    stem = os.path.join(save_dir, f'gradient_attribution_{role_name.lower()}')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {fname}')
+    print(f'Saved: {saved}  (+.png)')

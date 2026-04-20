@@ -22,6 +22,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+from validation_poc.analysis.visualize import CB_COLORS, _apply_style, _savefig
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _WORKSPACE = os.path.dirname(_ROOT)
@@ -62,6 +63,7 @@ def compute_gradient_attribution_cond(policies, device, label='Cond'):
 
 def plot_attribution_comparison(grad_cond3, grad_cond4, grad_cond5, plots_dir):
     """Bar chart comparing role-dim gradient across Cond3/4/5 per role."""
+    _apply_style()
     fig, ax = plt.subplots(figsize=(8, 4))
     x = np.arange(3)
     width = 0.25
@@ -71,24 +73,28 @@ def plot_attribution_comparison(grad_cond3, grad_cond4, grad_cond5, plots_dir):
     c4 = [grad_cond4[r]['role'] for r in ROLES]
     c5 = [grad_cond5[r]['role'] for r in ROLES]
 
-    ax.bar(x - width, c3, width, label='Cond3 (Role+MLP)', color='steelblue')
-    ax.bar(x,         c4, width, label='Cond4 (No-Label+Attn)', color='darkorange')
-    ax.bar(x + width, c5, width, label='Cond5 (Flat-MLP)', color='firebrick')
+    ax.bar(x - width, c3, width, label='Cond3 (Role+MLP)',
+           color=CB_COLORS[0], hatch='//', edgecolor='white')
+    ax.bar(x,         c4, width, label='Cond4 (No-Label+Attn)',
+           color=CB_COLORS[1], hatch='xx', edgecolor='white')
+    ax.bar(x + width, c5, width, label='Cond5 (Flat-MLP)',
+           color=CB_COLORS[2], hatch='..', edgecolor='white')
 
     ax.set_xticks(x)
-    ax.set_xticklabels(roles_display, fontsize=9)
-    ax.set_ylabel('Mean |∂logit/∂role_dim|')
+    ax.set_xticklabels(roles_display)
+    ax.set_ylabel(r'Mean $|\partial \mathrm{logit} / \partial \mathrm{role\_dim}|$')
     ax.set_title('Role-Dim Gradient Magnitude: Cond3 vs Cond4 vs Cond5')
-    ax.legend(fontsize=8)
+    ax.legend()
     plt.tight_layout()
-    out = os.path.join(plots_dir, 'role_grad_attribution_comparison.png')
-    plt.savefig(out, dpi=150)
+    stem = os.path.join(plots_dir, 'role_grad_attribution_comparison')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {out}')
+    print(f'Saved: {saved}  (+.png)')
 
 
 def plot_multiseed_routing(mean_matrix, std_matrix, plots_dir):
     """Heatmap of 3×3 routing matrix with ± std annotations."""
+    _apply_style()
     fig, ax = plt.subplots(figsize=(5, 4))
     role_labels = ['Strike\n(Marine)', 'Vanguard\n(Marauder)', 'Support\n(Medivac)']
 
@@ -99,7 +105,7 @@ def plot_multiseed_routing(mean_matrix, std_matrix, plots_dir):
             if i == j:
                 annot[i, j] = '—'
             else:
-                annot[i, j] = f'{mean_matrix[i,j]:.3f}\n±{std_matrix[i,j]:.3f}'
+                annot[i, j] = f'{mean_matrix[i,j]:.3f}\n\u00b1{std_matrix[i,j]:.3f}'
 
     display = np.where(mask, np.nan, mean_matrix)
     sns.heatmap(display, annot=annot, fmt='', cmap='Blues',
@@ -110,10 +116,10 @@ def plot_multiseed_routing(mean_matrix, std_matrix, plots_dir):
     ax.set_ylabel('Agent Role')
     ax.set_title('Multi-Seed Routing Matrix (Cond1, 3 seeds)')
     plt.tight_layout()
-    out = os.path.join(plots_dir, 'role_routing_matrix_cond1_multiseed.png')
-    plt.savefig(out, dpi=150)
+    stem = os.path.join(plots_dir, 'role_routing_matrix_cond1_multiseed')
+    saved = _savefig(fig, stem)
     plt.close()
-    print(f'Saved: {out}')
+    print(f'Saved: {saved}  (+.png)')
 
 
 def main():
