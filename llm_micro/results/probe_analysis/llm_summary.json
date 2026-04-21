@@ -1,0 +1,73 @@
+{
+  "n_parsed": 24,
+  "n_total": 24,
+  "routing_matrix_explicit_surface": [
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "routing_matrix_implicit_surface": [
+    [
+      0.5,
+      0.0,
+      0.5
+    ],
+    [
+      0.5,
+      0.25,
+      0.25
+    ],
+    [
+      0.5,
+      0.0,
+      0.5
+    ]
+  ],
+  "routing_matrix_implicit_latent": [
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "surface_accuracy_explicit": 1.0,
+  "surface_accuracy_implicit": 1.0,
+  "latent_accuracy_explicit": 1.0,
+  "latent_accuracy_implicit": 1.0,
+  "routing_std_explicit_surface": 0.4714045207910317,
+  "routing_std_implicit_surface": 0.2041241452319315,
+  "routing_std_implicit_latent": 0.4714045207910317,
+  "surface_legibility_ratio": 2.309401076758503,
+  "delta_max_explicit_latent": {
+    "Strike": 0.0,
+    "Vanguard": 0.0,
+    "Support": 0.0
+  },
+  "delta_max_implicit_latent": {
+    "Strike": 0.0,
+    "Vanguard": 0.0,
+    "Support": 0.0
+  }
+}

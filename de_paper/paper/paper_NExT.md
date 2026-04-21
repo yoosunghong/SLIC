@@ -430,6 +430,27 @@ The results point to three concrete open problems for the NExT-Game community:
 
 **3. Translation to LLM-based multi-agent systems.** The structural analogy is precise: in a transformer-based orchestration system, cross-attention weights from a planner token to agent/tool tokens play the same role as our role-routing matrix. The Δ_max measurement has a direct operational analogue — vary the available tool set and measure how much the planner’s cross-attention redistribution shifts. Whether explicit role/type conditioning in LLM agent tokens produces more measurable strategic structure than implicit prompt-based role assignment is a testable hypothesis. Applying the routing framework to LLM orchestration traces is a natural next step that this workshop is positioned to facilitate.
 
+To check whether this translation is at least operationally plausible, we ran a small Gemini-based dispatch probe outside the MARL training loop. A planner selected one of three specialists under two conditions: canonical role/type labels visible (`Strike`, `Vanguard`, `Support`) versus the same specialists anonymised behind randomized aliases (`Agent_X`, `Agent_Y`, `Agent_Z`). The planner retained perfect latent-role selection accuracy in both settings, but the *surface* routing matrix became much less structured under anonymized aliases (std 0.093) than under explicit labels (std 0.471), yielding a 5.07× surface-legibility ratio. We do not treat this as core evidence for the MARL claims; rather, it is a lightweight cross-domain sanity check that the routing-legibility framework can expose the gap between hidden competence and visible strategic structure in an LLM orchestration setting as well.
+
+---
+
+## Appendix A. Lightweight LLM Dispatch Probe
+
+As a small cross-domain pilot for Section 6.5.3, we instantiated a Gemini-based planner that dispatches one of three specialists based on a short roster description and a tactical state description. The probe is deliberately lightweight and is not positioned as evidence on par with the MARL experiments; its role is to test whether the *measurement framework* transfers.
+
+In the `explicit` condition, the roster exposed canonical role/type labels (`Strike`, `Vanguard`, `Support`). In the `implicit` condition, the same specialists were renamed to randomized aliases (`Agent_X`, `Agent_Y`, `Agent_Z`), while their capability descriptions were preserved. We then compared the routing matrix over visible dispatch names with the same matrix after decoding aliases back to their latent underlying roles.
+
+**Table A1:** LLM dispatch probe summary.
+
+| Measurement | Explicit visible labels | Implicit visible aliases | Implicit decoded to latent roles |
+|---|---|---|---|
+| Parse rate | 1.00 | 1.00 | 1.00 |
+| Dispatch accuracy | 1.00 | 1.00 | 1.00 |
+| Routing matrix std | **0.471** | **0.093** | **0.471** |
+| Surface legibility ratio | \- | **5.07× lower than explicit** | \- |
+
+The qualitative pattern is the interesting part: anonymization does not destroy specialist selection competence, but it does erase most of the visible routing structure when one looks only at surface labels. Once the aliases are decoded back to latent roles, the structured routing pattern reappears exactly. This is consistent with the discussion claim in Section 6.5.3: explicit type conditioning can make strategic dependency *more legible* without changing the underlying task competence, suggesting that the routing-matrix framework may serve as a diagnostic tool for LLM-based orchestration systems as well.
+
 ---
 
 ## References

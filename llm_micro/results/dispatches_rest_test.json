@@ -1,0 +1,98 @@
+[
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON requested"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON requested:"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON requested"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON requested"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON requested:"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": null,
+    "raw": "Here is the JSON"
+  }
+]

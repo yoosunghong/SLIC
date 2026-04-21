@@ -1,0 +1,98 @@
+[
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"Strike is optimal for suppressing ranged enemies at a distance.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is a ranged specialist and can suppress the enemy units from a distance.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"Strike is optimal for suppressing ranged enemies from a distance.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_Y",
+    "raw": "{\"dispatch\": \"Agent_Y\", \"reason\": \"Agent_Y is best suited to suppress ranged enemies at a distance.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"Vanguard is needed to tank the incoming melee damage from the enemy unit.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is dispatched to tank the incoming melee damage and protect the allies.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"A frontline body is needed to tank incoming melee damage.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is dispatched to intercept the enemy melee unit and protect Ally_A.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Ally_A is critically low on HP and will die without immediate healing.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is dispatched to heal Ally_A and prevent its death.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Ally_A is critically low on HP and will die without immediate healing.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is the closest available agent to heal Ally_A and prevent their death.\"}"
+  }
+]

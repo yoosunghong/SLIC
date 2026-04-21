@@ -1,0 +1,52 @@
+{
+  "n_parsed": 3,
+  "n_total": 12,
+  "routing_matrix_explicit": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "routing_matrix_implicit": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "routing_std_explicit_all": 0.41573970964154905,
+  "routing_std_implicit_all": 0.0,
+  "routing_std_explicit_offdiag": 0.0,
+  "routing_std_implicit_offdiag": 0.0,
+  "delta_max_explicit": {
+    "Strike": 0.0,
+    "Vanguard": 1.0,
+    "Support": 0.0
+  },
+  "delta_max_implicit": {
+    "Strike": 0.0,
+    "Vanguard": 0.0,
+    "Support": 0.0
+  }
+}

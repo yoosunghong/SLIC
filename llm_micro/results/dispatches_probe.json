@@ -1,0 +1,338 @@
+[
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Strike",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"The Strike agent is best suited to engage enemy marksmen from a standoff distance and break their firing line.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Strike",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"The Strike agent is best suited to engage enemy marksmen from a standoff distance and break their firing line.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Z": "Vanguard",
+      "Agent_Y": "Support",
+      "Agent_X": "Strike"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X can engage the enemy marksmen from standoff distance, breaking their firing line without exposing the clustered allies.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_Z",
+    "surface_to_role": {
+      "Agent_Z": "Strike",
+      "Agent_Y": "Support",
+      "Agent_X": "Vanguard"
+    },
+    "dispatched": "Agent_Z",
+    "raw": "{\"dispatch\":\"Agent_Z\",\"reason\":\"Agent_Z is best suited to engage enemy marksmen from a standoff distance and break their firing line without exposing the clustered allies.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Strike",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"The Strike agent can pressure exposed shooters from long range without overcommitting into melee.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Strike",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Strike",
+    "raw": "{\"dispatch\":\"Strike\",\"reason\":\"Strike can pressure exposed shooters from long range without overcommitting into melee range.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_Z",
+    "surface_to_role": {
+      "Agent_Z": "Strike",
+      "Agent_Y": "Vanguard",
+      "Agent_X": "Support"
+    },
+    "dispatched": "Agent_Z",
+    "raw": "{\"dispatch\":\"Agent_Z\",\"reason\":\"Agent_Z can pressure exposed shooters from long range without overcommitting into melee.\"}"
+  },
+  {
+    "context_role": "Strike",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Y": "Vanguard",
+      "Agent_Z": "Support",
+      "Agent_X": "Strike"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X can pressure exposed long-range shooters from a standoff distance without overcommitting.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Vanguard",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"The Vanguard is best suited to engage the enemy bruiser in close quarters and absorb pressure.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Vanguard",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"The Vanguard is best suited to absorb pressure and thrive in close-quarters contact against the enemy bruiser.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_Z",
+    "surface_to_role": {
+      "Agent_Y": "Support",
+      "Agent_Z": "Vanguard",
+      "Agent_X": "Strike"
+    },
+    "dispatched": "Agent_Z",
+    "raw": "{\"dispatch\":\"Agent_Z\",\"reason\":\"Agent_Z is best suited to engage the enemy bruiser in close quarters and absorb pressure.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_Y",
+    "surface_to_role": {
+      "Agent_X": "Support",
+      "Agent_Z": "Strike",
+      "Agent_Y": "Vanguard"
+    },
+    "dispatched": "Agent_Y",
+    "raw": "{\"dispatch\":\"Agent_Y\",\"reason\":\"Agent_Y is best suited to absorb pressure and body-block the enemy bruiser due to heavy armor and close-quarters effectiveness.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Vanguard",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"The Vanguard is best suited to intercept and body-block the fast melee threat due to heavy armor and proficiency in close-quarters contact.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Vanguard",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Vanguard",
+    "raw": "{\"dispatch\":\"Vanguard\",\"reason\":\"The Vanguard is best suited to intercept and body-block the fast melee threat due to heavy armor and proficiency in close-quarters combat.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Y": "Support",
+      "Agent_Z": "Strike",
+      "Agent_X": "Vanguard"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is best suited to intercept and body-block the fast melee threat due to heavy armor and close-quarters combat proficiency.\"}"
+  },
+  {
+    "context_role": "Vanguard",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Z": "Strike",
+      "Agent_X": "Vanguard",
+      "Agent_Y": "Support"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is best suited to intercept and body-block the fast melee threat due to heavy armor and proficiency in close-quarters combat.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Support",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Support can restore allied health and stabilize the team's durability, which is crucial given two allies are chipped down and losing an attrition battle.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Support",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Support can restore allied health and stabilize the team's durability, which is crucial given the current attrition battle.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Y": "Vanguard",
+      "Agent_X": "Support",
+      "Agent_Z": "Strike"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is the only agent capable of restoring allied health and stabilizing the team's durability, which is critical given the current attrition battle.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Clustered",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_X",
+    "surface_to_role": {
+      "Agent_Y": "Vanguard",
+      "Agent_X": "Support",
+      "Agent_Z": "Strike"
+    },
+    "dispatched": "Agent_X",
+    "raw": "{\"dispatch\":\"Agent_X\",\"reason\":\"Agent_X is the only agent capable of restoring allied health and stabilizing the team's durability, which is critical given the chipped allies.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 0,
+    "expected_dispatch": "Support",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Support can restore allied health and works best behind teammates, making them ideal for keeping the critical ally alive.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "explicit",
+    "seed": 1,
+    "expected_dispatch": "Support",
+    "surface_to_role": {
+      "Strike": "Strike",
+      "Vanguard": "Vanguard",
+      "Support": "Support"
+    },
+    "dispatched": "Support",
+    "raw": "{\"dispatch\":\"Support\",\"reason\":\"Support can keep the wounded ally alive and is best utilized behind teammates, which aligns with the retreating ally's situation.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 0,
+    "expected_dispatch": "Agent_Z",
+    "surface_to_role": {
+      "Agent_Z": "Support",
+      "Agent_X": "Strike",
+      "Agent_Y": "Vanguard"
+    },
+    "dispatched": "Agent_Z",
+    "raw": "{\"dispatch\":\"Agent_Z\",\"reason\":\"Agent_Z is best suited to keep the wounded ally alive due to their field medical gear and ability to work behind teammates.\"}"
+  },
+  {
+    "context_role": "Support",
+    "formation": "Spread",
+    "condition": "implicit",
+    "seed": 1,
+    "expected_dispatch": "Agent_Z",
+    "surface_to_role": {
+      "Agent_Z": "Support",
+      "Agent_Y": "Vanguard",
+      "Agent_X": "Strike"
+    },
+    "dispatched": "Agent_Z",
+    "raw": "{\"dispatch\":\"Agent_Z\",\"reason\":\"Agent_Z is best suited to keep the wounded ally alive and works best behind teammates.\"}"
+  }
+]

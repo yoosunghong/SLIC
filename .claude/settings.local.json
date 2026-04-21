@@ -44,7 +44,11 @@
       "Bash(grep -E \"^\\\\s*[0-9]{1,2}%|^\\\\s*100%\")",
       "Bash(python /tmp/verify_parallel.py)",
       "Bash(python /tmp/check_actual_times.py)",
-      "Bash(find /d/Github/SLIC/validation_poc/results/checkpoints -name \"*.pt\" -type f -exec stat -c \"%y %n\" {} \\\\;)"
+      "Bash(find /d/Github/SLIC/validation_poc/results/checkpoints -name \"*.pt\" -type f -exec stat -c \"%y %n\" {} \\\\;)",
+      "Bash(python -c \"import sys; s=sys.stdin.read\\(\\); print\\(s[:3000]\\)\")",
+      "Bash(grep -E \"^\\\\.env$|^\\\\.env\\\\s\" D:/Github/SLIC/.gitignore)",
+      "Bash(python -c \"from dotenv import load_dotenv; import os; load_dotenv\\(\\); k=os.environ.get\\('GEMINI_API_KEY'\\); print\\('KEY_PRESENT' if k else 'MISSING', 'len=', len\\(k\\) if k else 0\\)\")",
+      "Bash(python -c \"import google.generativeai as genai\")"
     ]
   }
 }
