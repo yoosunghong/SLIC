@@ -35,7 +35,9 @@
       "Bash(python de_paper/paper/figures/draw_architecture.py)",
       "Bash(echo \"exit:$?\")",
       "Bash(python -c ' *)",
-      "Bash(python smacv2_poc/regen_styled_plots.py)"
+      "Bash(python smacv2_poc/regen_styled_plots.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -)"
     ]
   }
 }

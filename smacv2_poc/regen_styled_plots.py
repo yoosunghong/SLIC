@@ -144,10 +144,10 @@ def main():
         print(f'  Routing matrix (Cond3 gradient):\n{routing3}')
         plot_role_routing_matrix(routing3, 'Cond3_MLP_Gradient_SMACv2', PLOTS_NEW)
 
-    # ── Extended: Multi-seed Cond1 routing matrix ─────────────────────────
+    # ── Extended: Multi-seed Cond1 routing matrix (seeds 0-4) ────────────
     print('\n[Extended] Multi-seed Cond1 routing matrix')
     matrices = []
-    for seed in range(3):
+    for seed in range(5):
         c = ckpt(1, seed)
         if c:
             print(f'  seed{seed}: {os.path.basename(c)}')

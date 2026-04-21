@@ -114,7 +114,7 @@ def plot_multiseed_routing(mean_matrix, std_matrix, plots_dir):
                 mask=mask)
     ax.set_xlabel('Attended Ally Role')
     ax.set_ylabel('Agent Role')
-    ax.set_title('Multi-Seed Routing Matrix (Cond1, 3 seeds)')
+    ax.set_title('Multi-Seed Routing Matrix (Cond1, 5 seeds)')
     plt.tight_layout()
     stem = os.path.join(plots_dir, 'role_routing_matrix_cond1_multiseed')
     saved = _savefig(fig, stem)

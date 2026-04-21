@@ -1,0 +1,3 @@
+Condition 4 | Seed 3 | Device: cuda | CPU threads: 4 | VRAM fraction: 50%
+Resumed from results\checkpoints\cond4_seed3_step200192.pt at step 200192
+Done. Checkpoint: D:\Github\SLIC\smacv2_poc\results\checkpoints\cond4_seed3_step2000384.pt

@@ -1,5 +1,9 @@
 # Validation Project — Overall Plan
 
+## Recent Ops
+
+- 2026-04-21 01:50 +09:00: Restarted `smacv2_poc` Condition 4 training for seeds 3 and 4 from latest checkpoints `cond4_seed3_step200192.pt` and `cond4_seed4_step200192.pt` after mid-run crash (`Status.ended` from SMACv2).
+
 ## Goal
 
 Validate the research claims of the paper through a phased experimental pipeline. Phase 1 (PoC) uses a lightweight MiniGrid environment to establish that the core mechanism exists. Phase 2 (Main) ports to SMACv2 for benchmark reproducibility. Phase 3 produces the paper.

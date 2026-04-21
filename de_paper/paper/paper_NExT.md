@@ -7,7 +7,7 @@
 
 ## Abstract
 
-There is a persistent gap between classical game-theoretic prescriptions for role-differentiated behavior and the coordination conventions that cooperative MARL agents actually learn under non-stationary gradient dynamics. We ask whether policy architecture determines the *legibility* of role-conditioned routing — whether role-pair strategic dependencies can be measured and interpreted in the learned policy. To study this, we introduce an analysis framework combining a role-routing matrix, a formation-sensitivity metric, and gradient attribution across five controlled ablations on a custom SMACv2 scenario. We find that attention produces more structured role-to-role routing than MLP, that role labels are structurally load-bearing, and that the emergent routing pattern is tactically coherent yet diverges from theory-informed expectations. This divergence provides a concrete empirical example of the translation gap between prescribed strategic roles and learned coordination conventions.
+There is a persistent gap between classical game-theoretic prescriptions for role-differentiated behavior and the coordination conventions that cooperative MARL agents actually learn under non-stationary gradient dynamics. We ask whether policy architecture determines the *legibility* of role-conditioned routing — whether role-pair strategic dependencies can be measured and interpreted in the learned policy. To study this, we introduce an analysis framework combining a role-routing matrix, a formation-sensitivity metric, and gradient attribution across five controlled ablations on a custom SMACv2 scenario. We find that attention produces more structured role-to-role routing than MLP (5× higher routing std), that role labels are structurally load-bearing for attention but confer no measurable performance gain in MLP — supporting the claim that MLP lacks a direct routing pathway — and that the emergent routing pattern is tactically coherent yet diverges from theory-informed expectations. This divergence provides a concrete empirical example of the translation gap between prescribed strategic roles and learned coordination conventions.
 
 This paper’s contribution is an analysis framework, not a new state-of-the-art policy: we measure and interpret how role-conditioned strategic dependencies are learned under different architectures.
 
@@ -78,7 +78,7 @@ In an MLP policy, the role label is concatenated with all other observation feat
 h = MLP([o_pos, o_hp, r_onehot, ...])
 ```
 
-The computation "which entity to attend to given my role" is not structurally encoded. It must be implicitly learned as a feature interaction across weight products W₁W₂⋯Wₙ. The MLP lacks a direct architectural pathway toward routing conditioned on role-pair. Gradient attribution is consistent with this hypothesis: role one-hot dimensions in Condition 3 carry 3.9–4.3× less gradient signal than spatial features (Section 5), while the attention mechanism produces a 5× more structured routing profile.
+The computation "which entity to attend to given my role" is not structurally encoded. It must be implicitly learned as a feature interaction across weight products W₁W₂⋯Wₙ. The MLP lacks a direct architectural pathway toward routing conditioned on role-pair. Gradient attribution is consistent with this hypothesis: role one-hot dimensions in Condition 3 carry 2.3–5.8× less gradient signal than spatial features (Section 5), while the attention mechanism produces a 5× more structured routing profile.
 
 We do not claim that MLP routing is impossible. The claim is calibrated: attention provides a *more direct architectural pathway* for role-pair routing. Whether this pathway is actually used is a matter for empirical measurement.
 
@@ -103,7 +103,7 @@ This computation is short (one matrix multiplication per head) and attributable:
 
 Before cross-attention, each entity group passes through an Intra-Set Self-Attention block. This provides relational context within the ally set before the agent's query is formed. Specifically, the ally token for Vanguard can be enriched by its relationship to the Support token before entering the cross-attention Key computation.
 
-This explains the performance gap between Condition 1 (Full) and Condition 2 (No Self-Attn): without intra-set contextualization, Keys and Values entering cross-attention are computed from raw entity embeddings without relational structure. The 7pp performance degradation (0.80 vs. 0.73) is consistent with this: intra-set self-attention contributes beyond the role-routing path, but the routing mechanism itself is primarily located in cross-attention.
+This explains the performance gap between Condition 1 (Full) and Condition 2 (No Self-Attn): without intra-set contextualization, Keys and Values entering cross-attention are computed from raw entity embeddings without relational structure. The 10pp performance degradation (0.652 vs. 0.551) is consistent with this: intra-set self-attention contributes beyond the role-routing path, but the routing mechanism itself is primarily located in cross-attention.
 
 ### 3.5 Testable Predictions
 
@@ -178,7 +178,7 @@ All conditions use MAPPO [6] with the following hyperparameters, kept constant a
 |---|---|
 | Algorithm | MAPPO |
 | Total steps | 2M per seed |
-| Seeds | 3 |
+| Seeds | 5 |
 | GAE λ | 0.95 |
 | Discount γ | 0.99 |
 | PPO clip ε | 0.2 |
@@ -211,7 +211,7 @@ Team reward is mixed with individual reward: `r_final = 0.8 · r_individual + 0.
 
 ### 5.1 Experimental Setup
 
-We evaluate five ablation conditions on a custom SMACv2 scenario using three Terran unit types as role proxies: Marine (**Strike**), Marauder (**Vanguard**), and Medivac (**Support**). The team of three agents operates on a 10-agent generation map. Each condition is trained for 2M environment steps using MAPPO with 3 independent seeds. All conditions share identical hyperparameters from a single configuration file.
+We evaluate five ablation conditions on a custom SMACv2 scenario using three Terran unit types as role proxies: Marine (**Strike**), Marauder (**Vanguard**), and Medivac (**Support**). The team of three agents operates on a 10-agent generation map. Each condition is trained for 2M environment steps using MAPPO with 5 independent seeds. All conditions share identical hyperparameters from a single configuration file.
 
 The 65-dimensional entity-centric observation contains four named token groups: `self_tok` (8 dims: position, health, shield, role one-hot), `ally_tok` (16 dims: 2 allies × 8), `enemy_tok` (16 dims: 2 enemies × 8), and `zone_tok` (18 dims: 3 zones × 6), followed by validity masks. Role one-hots occupy 3 dimensions within both `self_tok` and each ally slot in `ally_tok`; this placement is load-bearing for the routing mechanism (Section 3).
 
@@ -219,23 +219,23 @@ We organize results by *claim*, not by metric type. Section 5.2 presents perform
 
 ### 5.2 Performance Evidence: Usefulness
 
-**Table 1:** Track 1 performance on SMACv2 (Terran 3-agent scenario). Win rate is mean over 3 seeds (last 20 eval checkpoints).
+**Table 1:** Track 1 performance on SMACv2 (Terran 3-agent scenario). Win rate is mean over 5 seeds (last 20 eval checkpoints).
 
-| # | Condition | Win Rate |
-|---|---|---|
-| 1 | Full (Self-Attn + Cross-Attn + Role Label) | 0.80 |
-| 2 | No-SelfAttn (Cross-Attn + Role Label) | 0.73 |
-| 3 | Role+MLP (MLP + Role Label) | 0.43 |
-| 4 | No-RoleLabel (Self-Attn + Cross-Attn, shared) | 0.50 |
-| 5 | Flat-MLP (MLP, no label) | 0.23 |
+| # | Condition | Win Rate | Std |
+|---|---|---|---|
+| 1 | Full (Self-Attn + Cross-Attn + Role Label) | 0.652 | 0.079 |
+| 2 | No-SelfAttn (Cross-Attn + Role Label) | 0.551 | 0.210 |
+| 3 | Role+MLP (MLP + Role Label) | 0.440 | 0.143 |
+| 4 | No-RoleLabel (Self-Attn + Cross-Attn, shared) | 0.474 | 0.204 |
+| 5 | Flat-MLP (MLP, no label) | 0.494 | 0.064 |
 
-![Win rate learning curves for all five conditions over 2M training steps](../../smacv2_poc/smacv2_poc/results/plots/win_rate_curves.png)
+![Win rate learning curves for all five conditions over 2M training steps](../../smacv2_poc/results/plots/new/win_rate_curves.png)
 
-*Figure 2: Win rate learning curves for all five ablation conditions across 2M training steps (3 seeds). Condition 1 (Full) converges to the highest win rate (0.80); Condition 5 (Flat-MLP) is the performance floor (0.23).*
+*Figure 2: Win rate learning curves for all five ablation conditions across 2M training steps (5 seeds each). Condition 1 (Full) converges to the highest mean win rate (0.652); Condition 3 (Role+MLP) achieves the lowest (0.440).*
 
-The full system (Cond 1, 0.80) outperforms all ablations. Removing intra-set self-attention (Cond 2, 0.73) incurs a 7pp deficit, indicating that intra-set relational structure contributes beyond cross-attention alone. Removing all attention in favor of MLP (Cond 3, 0.43) drops performance by 37pp relative to Cond 1, which is the largest single-component degradation. Removing role labels with a shared policy (Cond 4, 0.50) underperforms Cond 1 by 30pp, supporting the claim that role label information is structurally load-bearing. The flat MLP baseline (Cond 5, 0.23) achieves the lowest win rate, establishing a performance floor.
+The full system (Cond 1, 0.652) outperforms all ablations. Removing intra-set self-attention (Cond 2, 0.551) incurs a 10pp deficit, indicating that intra-set relational structure contributes beyond cross-attention alone. Removing all attention in favor of MLP (Cond 3, 0.440) drops performance by 21pp relative to Cond 1. Removing role labels with a shared policy (Cond 4, 0.474) underperforms Cond 1 by 18pp, supporting the claim that role label information is structurally load-bearing. The flat MLP baseline (Cond 5, 0.494) achieves a comparable win rate to Cond 4 (No-RoleLabel, 0.474) and outperforms Cond 3 (Role+MLP, 0.440), despite having no role labels.
 
-The ordering Cond 1 > Cond 2 > Cond 4 > Cond 3 > Cond 5 is consistent with the design: each component (attention, role labels, intra-set structure) contributes positively and their effects are roughly additive. Performance is reported as evidence that the architecture is useful enough to learn a non-trivial policy in which routing analysis is meaningful — it is supporting evidence, not the primary result.
+The ordering is Cond 1 > Cond 2 > Cond 5 > Cond 4 ≈ Cond 3. A notable finding is that Cond 5 (flat MLP, no labels) outperforms Cond 3 (MLP with role labels): adding role labels to an MLP does not produce a measurable performance gain — and here yields slightly lower win rate, consistent with the mechanistic argument in Section 3.2 that MLP lacks a direct routing pathway for role-pair information, and the role one-hots are therefore not structurally exploited. The 18pp gap between Cond 1 and Cond 4 (shared attention, no labels) supports the joint contribution of attention and independent policies. Condition 2 and Condition 4 both show elevated variance across seeds (std 0.210 and 0.204 respectively), indicating instability in the no-self-attn and shared-policy conditions. Performance is reported as evidence that the architecture is useful enough to learn a non-trivial policy in which routing analysis is meaningful — it is supporting evidence, not the primary result.
 
 ### 5.3 Routing Evidence: Architectural Legibility
 
@@ -247,50 +247,50 @@ We construct two fixed evaluation scenarios without running a live environment: 
 
 | Condition | Strike (Marine) | Vanguard (Marauder) | Support (Medivac) |
 |---|---|---|---|
-| Cond 1 (Full) | 0.0093 | 0.0489 | **0.0857** |
+| Cond 1 (Full) | 0.028 | 0.035 | **0.103** |
 | Cond 2 (No-SelfAttn) | 0.000 | 0.000 | 0.000 |
 
-![Delta_max comparison bar chart across roles for Conditions 1 and 2](../../smacv2_poc/smacv2_poc/results/plots/delta_max_comparison.png)
+![Delta_max comparison bar chart across roles for Conditions 1 and 2](../../smacv2_poc/results/plots/new/delta_max_comparison.png)
 
 *Figure 3: Δ_max formation sensitivity per role for Condition 1 (Full) vs. Condition 2 (No-SelfAttn). Support (Medivac) shows the highest sensitivity; Condition 2 shows zero sensitivity by construction (no intra-set attention).*
 
 Self-attention heatmaps (Clustered vs. Spread, with difference map) for each role:
 
-![Self-attention heatmap for Strike (Marine): Clustered vs. Spread scenarios](../../smacv2_poc/smacv2_poc/results/plots/self_attn_heatmap_strike_marine.png)
+![Self-attention heatmap for Strike (Marine): Clustered vs. Spread scenarios](../../smacv2_poc/results/plots/new/self_attn_heatmap_strike (marine).png)
 
-*Figure 4: Self-attention weight matrix for Strike (Marine) under Clustered and Spread scenarios, with difference map. Δ_max = 0.0093.*
+*Figure 4: Self-attention weight matrix for Strike (Marine) under Clustered and Spread scenarios, with difference map. Δ_max = 0.028.*
 
-![Self-attention heatmap for Vanguard (Marauder): Clustered vs. Spread scenarios](../../smacv2_poc/smacv2_poc/results/plots/self_attn_heatmap_vanguard_marauder.png)
+![Self-attention heatmap for Vanguard (Marauder): Clustered vs. Spread scenarios](../../smacv2_poc/results/plots/new/self_attn_heatmap_vanguard (marauder).png)
 
-*Figure 5: Self-attention weight matrix for Vanguard (Marauder) under Clustered and Spread scenarios, with difference map. Δ_max = 0.0489.*
+*Figure 5: Self-attention weight matrix for Vanguard (Marauder) under Clustered and Spread scenarios, with difference map. Δ_max = 0.035.*
 
-![Self-attention heatmap for Support (Medivac): Clustered vs. Spread scenarios](../../smacv2_poc/smacv2_poc/results/plots/self_attn_heatmap_support_medivac.png)
+![Self-attention heatmap for Support (Medivac): Clustered vs. Spread scenarios](../../smacv2_poc/results/plots/new/self_attn_heatmap_support (medivac).png)
 
-*Figure 6: Self-attention weight matrix for Support (Medivac) under Clustered and Spread scenarios, with difference map. Δ_max = 0.0857 — highest among all roles.*
+*Figure 6: Self-attention weight matrix for Support (Medivac) under Clustered and Spread scenarios, with difference map. Δ_max = 0.103 — highest among all roles.*
 
-Support (Medivac) shows the highest Δ_max (0.0857), indicating that the healer's self-attention weights are most sensitive to ally formation. This is consistent with the Medivac's role: a support unit that must reposition based on ally clustering to maximize healing coverage. Vanguard (Marauder) shows intermediate sensitivity (0.0489), while Strike (Marine) is least sensitive (0.0093). The original prediction (Vanguard highest, Support lowest) was wrong in direction for Support and Strike; the actual pattern is behaviorally coherent and discussed in Section 6.
+Support (Medivac) shows the highest Δ_max (0.103), indicating that the healer's self-attention weights are most sensitive to ally formation. This is consistent with the Medivac's role: a support unit that must reposition based on ally clustering to maximize healing coverage. Vanguard (Marauder) shows intermediate sensitivity (0.035), while Strike (Marine) is least sensitive (0.028). The original prediction (Vanguard highest, Support lowest) was wrong in direction for Support and Strike; the actual pattern is behaviorally coherent and discussed in Section 6.
 
 #### 5.3.2 Cross-Role Routing Matrix
 
-For each role and each scenario, we extract the cross-attention weight that the agent's `self_tok` query assigns to each ally slot, then tag each slot with the occupying ally's role. Slot-ordering bias is ruled out by verifying that reversing the ally slot order produces identical per-role routing weights (attention follows role content, not position). We report the multi-seed mean ± std over 3 seeds.
+For each role and each scenario, we extract the cross-attention weight that the agent's `self_tok` query assigns to each ally slot, then tag each slot with the occupying ally's role. Slot-ordering bias is ruled out by verifying that reversing the ally slot order produces identical per-role routing weights (attention follows role content, not position). We report the multi-seed mean ± std over 5 seeds.
 
-**Table 3:** Multi-seed role-routing matrix for Condition 1 (mean ± std, 3 seeds). Entry (i, j) is the mean cross-attention weight assigned by role i to ally slots occupied by role j. Diagonal entries are zero by construction.
+**Table 3:** Multi-seed role-routing matrix for Condition 1 (mean ± std, 5 seeds). Entry (i, j) is the mean cross-attention weight assigned by role i to ally slots occupied by role j. Diagonal entries are zero by construction.
 
 | Agent role \ Ally role | Strike (Marine) | Vanguard (Marauder) | Support (Medivac) |
 |---|---|---|---|
-| Strike (Marine) | — | **0.735 ± 0.165** | 0.265 ± 0.165 |
-| Vanguard (Marauder) | 0.583 ± 0.170 | — | 0.417 ± 0.170 |
-| Support (Medivac) | **0.752 ± 0.087** | 0.248 ± 0.087 | — |
+| Strike (Marine) | — | **0.713 ± 0.147** | 0.287 ± 0.147 |
+| Vanguard (Marauder) | 0.666 ± 0.171 | — | 0.334 ± 0.171 |
+| Support (Medivac) | **0.628 ± 0.169** | 0.372 ± 0.169 | — |
 
-![Role-routing matrix heatmap for Condition 1 (multi-seed)](../../smacv2_poc/smacv2_poc/results/plots/role_routing_matrix_cond1_multiseed.png)
+![Role-routing matrix heatmap for Condition 1 (multi-seed)](../../smacv2_poc/results/plots/new/role_routing_matrix_cond1_multiseed.png)
 
-*Figure 7: Multi-seed role-routing matrix for Condition 1. Each cell (i, j) shows the mean cross-attention weight assigned by role i to ally role j. Strike→Vanguard (0.735) and Support→Strike (0.752) are dominant off-diagonal entries.*
+*Figure 7: Multi-seed role-routing matrix for Condition 1 (5 seeds). Each cell (i, j) shows the mean cross-attention weight assigned by role i to ally role j. Strike→Vanguard (0.713) and Support→Strike (0.628) are the dominant off-diagonal entries.*
 
-![Role-routing matrix heatmap for Condition 1 (full SMACv2)](../../smacv2_poc/smacv2_poc/results/plots/role_routing_matrix_cond1_full_smacv2.png)
+![Role-routing matrix heatmap for Condition 1 (full SMACv2)](../../smacv2_poc/results/plots/new/role_routing_matrix_cond1_full_smacv2.png)
 
 *Figure 8: Role-routing matrix for Condition 1 (full SMACv2 scenario). Structured off-diagonal routing is consistent with the multi-seed result.*
 
-The routing matrix is consistently off-diagonal and structured across seeds. Strike (Marine) preferentially attends to Vanguard (Marauder) over Support (0.735 vs. 0.265), indicating that the ranged attacker uses the melee frontliner as a spatial reference. Support (Medivac) attends predominantly to Strike (0.752 vs. 0.248), suggesting the healer monitors the highest-activity attacker. Vanguard shows moderate split (0.583 Strike / 0.417 Support), consistent with a flexible frontline role. The standard deviation is largest for Strike and Vanguard (0.165–0.170), but the direction of preference is consistent across all seeds. Support's pattern is the most stable (std 0.087).
+The routing matrix is consistently off-diagonal and structured across seeds. Strike (Marine) preferentially attends to Vanguard (Marauder) over Support (0.713 vs. 0.287), indicating that the ranged attacker uses the melee frontliner as a spatial reference. Support (Medivac) attends more to Strike on average (0.628 vs. 0.372), suggesting the healer monitors the highest-activity attacker, though this pattern has higher variance with 5 seeds. Vanguard shows a Strike-dominant split (0.666 Strike / 0.334 Support), consistent with a flexible frontline role that primarily references the main attacker. The standard deviation is similar across all roles (0.147–0.171), indicating comparable seed-to-seed variance. Strike→Vanguard dominance is consistent in 4 of 5 seeds; Support→Strike dominance holds in 3 of 5 seeds, reflecting higher inter-seed variability in the healer's routing convention.
 
 #### 5.3.3 MLP Gradient Attribution
 
@@ -300,9 +300,9 @@ To assess how the MLP baseline (Condition 3) utilizes role labels, we compute in
 
 | Condition | Role | Spatial grad | Role grad | Ratio |
 |---|---|---|---|---|
-| Cond 3 (Role+MLP) | Strike | 0.716 | 0.183 | 3.9× |
-| Cond 3 (Role+MLP) | Vanguard | 0.431 | 0.100 | 4.3× |
-| Cond 3 (Role+MLP) | Support | 0.453 | 0.117 | 3.9× |
+| Cond 3 (Role+MLP) | Strike | 0.517 | 0.089 | 5.8× |
+| Cond 3 (Role+MLP) | Vanguard | 0.290 | 0.126 | 2.3× |
+| Cond 3 (Role+MLP) | Support | 0.433 | 0.116 | 3.7× |
 | Cond 4 (No-Label+Attn) | Strike | 0.204 | 0.079 | 2.6× |
 | Cond 4 (No-Label+Attn) | Vanguard | 0.347 | 0.086 | 4.0× |
 | Cond 4 (No-Label+Attn) | Support | 0.106 | 0.002 | 62× |
@@ -310,31 +310,31 @@ To assess how the MLP baseline (Condition 3) utilizes role labels, we compute in
 | Cond 5 (Flat-MLP) | Vanguard | 0.534 | 0.023 | 23× |
 | Cond 5 (Flat-MLP) | Support | 0.387 | 0.008 | 47× |
 
-![Gradient attribution comparison across roles and conditions](../../smacv2_poc/smacv2_poc/results/plots/role_grad_attribution_comparison.png)
+![Gradient attribution comparison across roles and conditions](../../smacv2_poc/results/plots/new/role_grad_attribution_comparison.png)
 
-*Figure 9: Role gradient attribution comparison across conditions. Bars show spatial vs. role-dim gradient magnitude. Condition 3 (Role+MLP) shows 3.9–4.3× spatial dominance; Condition 5 (Flat-MLP) shows 23–47× dominance.*
+*Figure 9: Role gradient attribution comparison across conditions. Bars show spatial vs. role-dim gradient magnitude. Condition 3 (Role+MLP) shows 2.3–5.8× spatial dominance; Condition 5 (Flat-MLP) shows 23–47× dominance.*
 
 Per-role gradient attribution breakdowns:
 
-![Gradient attribution for Strike (Marine)](../../smacv2_poc/smacv2_poc/results/plots/gradient_attribution_strike_marine.png)
+![Gradient attribution for Strike (Marine)](../../smacv2_poc/results/plots/new/gradient_attribution_strike (marine).png)
 
 *Figure 10: Input gradient attribution for Strike (Marine) across Conditions 3, 4, and 5. Spatial features consistently dominate role one-hot dimensions.*
 
-![Gradient attribution for Vanguard (Marauder)](../../smacv2_poc/smacv2_poc/results/plots/gradient_attribution_vanguard_marauder.png)
+![Gradient attribution for Vanguard (Marauder)](../../smacv2_poc/results/plots/new/gradient_attribution_vanguard (marauder).png)
 
-*Figure 11: Input gradient attribution for Vanguard (Marauder). Spatial/role ratio is highest (4.3×) among all roles in Condition 3.*
+*Figure 11: Input gradient attribution for Vanguard (Marauder). Spatial/role ratio is lowest (2.3×) among all roles in Condition 3, suggesting role dims receive relatively more gradient signal for the melee-engagement role.*
 
-![Gradient attribution for Support (Medivac)](../../smacv2_poc/smacv2_poc/results/plots/gradient_attribution_support_medivac.png)
+![Gradient attribution for Support (Medivac)](../../smacv2_poc/results/plots/new/gradient_attribution_support (medivac).png)
 
 *Figure 12: Input gradient attribution for Support (Medivac). Role-dim gradient collapses to near-zero (ratio 62×) in Condition 4, confirming label-absence as the cause.*
 
-![Role-routing matrix for Condition 3 (MLP gradient attribution version)](../../smacv2_poc/smacv2_poc/results/plots/role_routing_matrix_cond3_mlp_gradient_smacv2.png)
+![Role-routing matrix for Condition 3 (MLP gradient attribution version)](../../smacv2_poc/results/plots/new/role_routing_matrix_cond3_mlp_gradient_smacv2.png)
 
-*Figure 13: Pseudo-routing matrix for Condition 3 (MLP), constructed from input gradient attribution. Routing std = 0.078, versus 0.363 for Condition 1 — a 5× difference indicating substantially less structured routing.*
+*Figure 13: Pseudo-routing matrix for Condition 3 (MLP), constructed from input gradient attribution. Routing std = 0.055, versus 0.275 for Condition 1 — a 5× difference indicating substantially less structured routing.*
 
-In Condition 3 (role labels present, MLP), spatial features account for 3.9–4.3× more gradient signal than role label dimensions. Role labels are used, but weakly relative to spatial features. In Condition 4 (role labels zeroed before observation), role-dim gradients collapse toward zero (Medivac: 0.002, ratio 62×), supporting the interpretation that the near-zero role gradient is a consequence of label absence rather than architecture. In Condition 5 (labels zeroed, no attention), ratios are 23–47×. The step from Cond 3 to Cond 5 represents removing both role labels and attention structure; role-dim gradient drops by ~10×.
+In Condition 3 (role labels present, MLP), spatial features account for 2.3–5.8× more gradient signal than role label dimensions, varying by role (Strike: 5.8×; Vanguard: 2.3×; Support: 3.7×). Role labels are used, but weakly and unevenly relative to spatial features. In Condition 4 (role labels zeroed before observation), role-dim gradients collapse toward zero (Medivac: 0.002, ratio 62×), supporting the interpretation that the near-zero role gradient is a consequence of label absence rather than architecture. In Condition 5 (labels zeroed, no attention), ratios are 23–47×. The step from Cond 3 to Cond 5 represents removing both role labels and attention structure; role-dim gradient drops substantially.
 
-The routing structure difference between attention and MLP is quantified by the standard deviation of the routing matrix. Condition 1 achieves std = 0.363 versus std = 0.078 for the Condition 3 gradient-based pseudo-routing matrix, a 5× difference, supporting the claim that attention produces substantially more structured role-to-role routing than MLP. We note that these two quantities are not identical in kind: Condition 1's entries are softmax-normalised cross-attention weights, while Condition 3's are normalised gradient magnitudes over role-tagged slot dimensions. The comparison is meaningful because both measure how differentially a policy conditions entity selection on ally role: a uniform (unstructured) router yields low std under either construction, while a role-specialising router yields high std. The 5× gap therefore reflects a genuine structural difference rather than a units artefact, but we flag it as a cross-metric comparison rather than a like-for-like one.
+The routing structure difference between attention and MLP is quantified by the standard deviation of the routing matrix. Condition 1 achieves std = 0.275 versus std = 0.055 for the Condition 3 gradient-based pseudo-routing matrix, a 5× difference, supporting the claim that attention produces substantially more structured role-to-role routing than MLP. We note that these two quantities are not identical in kind: Condition 1's entries are softmax-normalised cross-attention weights, while Condition 3's are normalised gradient magnitudes over role-tagged slot dimensions. The comparison is meaningful because both measure how differentially a policy conditions entity selection on ally role: a uniform (unstructured) router yields low std under either construction, while a role-specialising router yields high std. The 5× gap therefore reflects a genuine structural difference rather than a units artefact, but we flag it as a cross-metric comparison rather than a like-for-like one.
 
 ### 5.4 Behavioral Interpretation
 
@@ -346,10 +346,10 @@ Section 6.1 interprets the revised predictions (Support highest Δ_max; Strike�
 
 | Claim | Type | Prediction | Outcome | Supports main thesis? | Interpretation |
 |---|---|---|---|---|---|
-| C1 | Structural | Attention produces more structured role routing than MLP | **PASS** (std 0.363 vs. 0.078, 5×) | Yes — direct evidence | Architecture determines routing legibility |
-| C2 | Structural | Removing role labels (shared policy) degrades win rate >5pp | **PASS** (30pp gap, 0.80 → 0.50) | Yes — direct evidence | Role labels are structurally load-bearing |
-| C3 | Behavioral | Vanguard Δ_max highest | **REVISED** (Support highest: 0.086 vs. 0.049 vs. 0.009) | Indirectly — routing still structured | Tactically coherent; healer repositions with ally clustering |
-| C4 | Behavioral | Strike→Support dominant | **REVISED** (Strike→Vanguard dominant: 0.735 vs. 0.265) | Indirectly — strong off-diagonal signal | Tactically coherent; ranged attacker anchors on frontliner |
+| C1 | Structural | Attention produces more structured role routing than MLP | **PASS** (std 0.275 vs. 0.055, 5×) | Yes — direct evidence | Architecture determines routing legibility |
+| C2 | Structural | Removing role labels (shared policy) degrades win rate >5pp | **PASS** (18pp gap, 0.652 → 0.474, 5 seeds) | Yes — direct evidence | Role labels are structurally load-bearing |
+| C3 | Behavioral | Vanguard Δ_max highest | **REVISED** (Support highest: 0.103 vs. 0.035 vs. 0.028) | Indirectly — routing still structured | Tactically coherent; healer repositions with ally clustering |
+| C4 | Behavioral | Strike→Support dominant | **REVISED** (Strike→Vanguard dominant: 0.713 vs. 0.287) | Indirectly — strong off-diagonal signal | Tactically coherent; ranged attacker anchors on frontliner |
 
 The two structural predictions (C1, C2) are supported, directly substantiating the main thesis. The two behavioral predictions (C3, C4) are revised: the routing is structured, but the specific convention that emerged differs from the theory-informed expectation. We treat this divergence as the substantive behavioral result of the paper (Section 6.1), not as an anomaly.
 
@@ -357,26 +357,26 @@ The two structural predictions (C1, C2) are supported, directly substantiating t
 
 ## 6. Discussion
 
-This paper is not a broad generalization claim; it is a controlled mechanism study. The central question is whether policy architecture determines the *legibility* of role-conditioned strategic dependencies — whether the role-pair routing learned by a cooperative MARL policy can be measured and interpreted. Our primary result is that attention enhances this legibility, producing routing patterns whose structure (std 0.363 vs. 0.078 for MLP) and label-dependence (30pp win-rate drop when labels are zeroed under a shared policy) can be quantified using the analysis framework we introduce. Within this scoped question, two structural predictions are supported and two behavioral predictions are revised; we read the revisions as the central behavioral observation, not as a defect.
+This paper is not a broad generalization claim; it is a controlled mechanism study. The central question is whether policy architecture determines the *legibility* of role-conditioned strategic dependencies — whether the role-pair routing learned by a cooperative MARL policy can be measured and interpreted. Our primary result is that attention enhances this legibility, producing routing patterns whose structure (std 0.275 vs. 0.055 for MLP) and label-dependence (18pp win-rate drop when labels are zeroed under a shared policy) can be quantified using the analysis framework we introduce. Within this scoped question, two structural predictions are supported and two behavioral predictions are revised; we read the revisions as the central behavioral observation, not as a defect.
 
 ### 6.1 Revised Predictions as Evidence of Theory-to-Learning Mismatch
 
 **Support Δ_max highest, not Vanguard.**
-The original prediction held that Vanguard (Marauder) would show the highest formation sensitivity because frontline melee positioning is directly tied to ally clustering. The data shows Support (Medivac) is most formation-sensitive (Δ_max = 0.086 vs. Vanguard 0.049, Strike 0.009). A plausible post-hoc interpretation: the Medivac healer must reposition continuously based on where allies cluster, since healing range requires proximity to the lowest-health ally. Formation change directly changes which ally the healer should be near, producing large attention weight shifts between Clustered and Spread scenarios. Vanguard's intermediate sensitivity (0.049) is consistent with a frontliner whose spatial decisions are also influenced by enemy position, not just ally clustering. Strike's low sensitivity (0.009) suggests the ranged attacker's positioning is largely determined by enemy location and attack range, making it relatively insensitive to ally formation alone.
+The original prediction held that Vanguard (Marauder) would show the highest formation sensitivity because frontline melee positioning is directly tied to ally clustering. The data shows Support (Medivac) is most formation-sensitive (Δ_max = 0.103 vs. Vanguard 0.035, Strike 0.028). A plausible post-hoc interpretation: the Medivac healer must reposition continuously based on where allies cluster, since healing range requires proximity to the lowest-health ally. Formation change directly changes which ally the healer should be near, producing large attention weight shifts between Clustered and Spread scenarios. Vanguard's intermediate sensitivity (0.035) is consistent with a frontliner whose spatial decisions are also influenced by enemy position, not just ally clustering. Strike's low sensitivity (0.028) suggests the ranged attacker's positioning is largely determined by enemy location and attack range, making it relatively insensitive to ally formation alone.
 
 We flag this as a post-hoc interpretation. The substantive point is that the theory-informed expectation (Vanguard highest) and the learned convention (Support highest) diverged; the routing mechanism itself produced a role-specific, role-ordered Δ_max profile, qualitatively distinct from the non-attending baseline (Condition 2: all Δ_max = 0). The divergence between expectation and outcome is the central observation.
 
 **Strike→Vanguard dominant, not Strike→Support.**
-The original prediction held that Strike (Marine) would attend primarily to Support (Medivac), reasoning that a ranged attacker benefits from proximity to a healer for survivability. The data shows Strike attends predominantly to Vanguard (0.735 ± 0.165 vs. 0.265 ± 0.165 to Support). This is behaviorally coherent: in a combat task, a ranged attacker's primary spatial problem is maintaining effective engagement range while the frontline tank (Marauder) anchors the fight. Strike uses Vanguard as a spatial reference point to calibrate its distance from the frontline. The healer, positioned behind allies, provides less actionable positional signal for a ranged DPS agent. The prediction assumed Strike would seek healer proximity for survivability; in practice, Strike uses the tank as a tactical anchor. Again, the mismatch is between the theory-informed expectation about *which* role-pair the policy would condition on and the coordination convention the learning dynamics actually selected — an empirical example of the translation gap, not a failure of the routing mechanism.
+The original prediction held that Strike (Marine) would attend primarily to Support (Medivac), reasoning that a ranged attacker benefits from proximity to a healer for survivability. The data shows Strike attends predominantly to Vanguard (0.713 ± 0.147 vs. 0.287 ± 0.147 to Support). This is behaviorally coherent: in a combat task, a ranged attacker's primary spatial problem is maintaining effective engagement range while the frontline tank (Marauder) anchors the fight. Strike uses Vanguard as a spatial reference point to calibrate its distance from the frontline. The healer, positioned behind allies, provides less actionable positional signal for a ranged DPS agent. The prediction assumed Strike would seek healer proximity for survivability; in practice, Strike uses the tank as a tactical anchor. Again, the mismatch is between the theory-informed expectation about *which* role-pair the policy would condition on and the coordination convention the learning dynamics actually selected — an empirical example of the translation gap, not a failure of the routing mechanism.
 
-The relatively high seed variance in Strike and Vanguard routing weights (std = 0.165–0.170) is consistent with the non-stationary nature of MARL dynamics: different random initializations may converge to distinct but locally stable coordination conventions, each satisfying the team reward signal yet differing in which specific role-pair dependency becomes dominant. This inter-seed variance is itself an empirical signature of the translation gap — classical game theory prescribes a unique equilibrium routing profile, whereas gradient-based learning selects among multiple convention-consistent attractors depending on initialization. The direction of routing preference (Strike→Vanguard dominant in all three seeds) is stable across this variance, suggesting that the convention basin is consistent even if its depth varies.
+The seed variance across all roles is now broadly similar (std 0.147–0.171), reflecting the non-stationary nature of MARL dynamics. Different random initializations may converge to distinct but locally stable coordination conventions, each satisfying the team reward signal yet differing in which specific role-pair dependency becomes dominant. This inter-seed variance is itself an empirical signature of the translation gap — classical game theory prescribes a unique equilibrium routing profile, whereas gradient-based learning selects among multiple convention-consistent attractors depending on initialization. The direction of routing preference (Strike→Vanguard dominant in 4 of 5 seeds; Support→Strike dominant in 3 of 5 seeds) is broadly stable across this variance, suggesting a consistent convention basin for Strike routing and a more variable one for Support.
 
 ### 6.2 What the Results Support
 
 The two predictions that held are the most structurally important:
 
-- **Routing structure.** Condition 1 produces a routing matrix with std = 0.363 vs. Condition 3's gradient-based pseudo-matrix std = 0.078 — a 5× difference. This is not a marginal effect. Attention produces qualitatively more structured role-to-role routing than MLP when role labels are present in both Q and K/V.
-- **Label load-bearing.** Removing role labels from a shared-policy attention network (Condition 4) degrades win rate by 30pp (0.50 vs. 0.80). The gradient attribution is consistent with this: when labels are zeroed, role-dim gradients collapse (Medivac: 62× spatial/role ratio in Cond 4 vs. 3.9× in Cond 3). Role labels are not incidental; they are structurally load-bearing for performance.
+- **Routing structure.** Condition 1 produces a routing matrix with std = 0.275 vs. Condition 3's gradient-based pseudo-matrix std = 0.055 — a 5× difference. This is not a marginal effect. Attention produces qualitatively more structured role-to-role routing than MLP when role labels are present in both Q and K/V.
+- **Label load-bearing.** Removing role labels from a shared-policy attention network (Condition 4) degrades win rate by 18pp (0.474 vs. 0.652). The gradient attribution is consistent with this: when labels are zeroed, role-dim gradients collapse (Medivac: 62× spatial/role ratio in Cond 4 vs. 2.3–5.8× in Cond 3). Role labels are not incidental; they are structurally load-bearing for performance.
 
 The two revised predictions are informative rather than damaging. They tell us which tactical routing pattern SMACv2 training selects for, not that routing fails to occur. An analysis that supports the claim "attention routes by role" and also reveals *which* routes emerge is more informative than one that merely matches a prior.
 
@@ -384,7 +384,7 @@ The two revised predictions are informative rather than damaging. They tell us w
 
 **Single environment.** All results are from a single custom SMACv2 scenario. The routing patterns (Strike→Vanguard, Support→Strike) may be specific to Terran unit dynamics and 3-agent formations. The routing structure may extend to other maps, team sizes, or factions, but future work should test this directly. The learned routing patterns represent one of potentially many locally stable strategic conventions; whether MAPPO reliably converges to the same convention across environments is an open question relevant to strategic stability analysis. The single-environment constraint limits generalization claims about which role-pair dependencies emerge under different strategic incentive structures.
 
-**Stability across seeds.** The core routing matrix in Table 3 is reported as a 3-seed mean with standard deviations (Strike and Vanguard std 0.165–0.170; Support std 0.087). The directional pattern (Strike→Vanguard dominant; Support→Strike dominant) is consistent across seeds, but the magnitude is seed-dependent. A subset of the analysis — specifically the Δ_max formation-sensitivity measurement and the seed-1 routing visualizations that informed the original behavioral predictions — was run on a single seed. We flag this as a scope limit on the behavioral predictions (C3, C4), not on the structural predictions (C1, C2), which are supported by the multi-seed routing matrix and by the gradient-attribution comparison.
+**Stability across seeds.** The core routing matrix in Table 3 is reported as a 5-seed mean with standard deviations (all roles: std 0.147–0.171). The directional pattern (Strike→Vanguard dominant in 4/5 seeds; Support→Strike dominant in 3/5 seeds) is broadly consistent across seeds, but Support routing shows higher inter-seed variability. All five conditions are now evaluated over 5 seeds. The Δ_max formation-sensitivity measurement (Table 2) is reported from a single seed (seed 0) and should be treated as directionally indicative rather than as a precise multi-seed estimate. We flag these as scope limits on the behavioral predictions (C3, C4), not on the structural predictions (C1, C2), which are supported by the multi-seed routing matrix and by the gradient-attribution comparison.
 
 **Slot-ordering verification.** A potential artifact in cross-attention routing analysis is positional bias: if a fixed slot always contains the same role, attention concentration on that slot may reflect positional preference rather than role routing. We verified that reversing ally slot order produces identical per-role routing matrices — attention weights follow role content, not slot position. This check confirms the routing matrix reflects genuine role-conditioned attention.
 
