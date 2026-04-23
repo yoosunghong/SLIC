@@ -156,6 +156,8 @@ These must remain identical across all 5 ablation conditions to ensure valid com
 - Random seeds (use 3 seeds per condition, report mean ± std)
 ## Completed Tasks
 
+- 2026-04-23 12:24 +09:00: Clarified in `de_paper/paper/paper_NExT.md` Section 5.2.1 that Condition 2's zero `Delta_max` is guaranteed by the ablation design rather than an empirical behavioral finding, addressing a likely reviewer question about interpretation.
+- 2026-04-23 12:20 +09:00: Updated `de_paper/paper/paper_NExT.md` to incorporate attention-faithfulness revisions requested for the current draft: expanded Related Work with NLP attention-interpretability citations (Jain & Wallace, Serrano & Smith, Bastings & Filippova, Wiegreffe & Pinter), clarified that attention weights are comparative rather than causal diagnostics, and strengthened the limitations/gradient-attribution framing accordingly.
 - 2026-04-22 03:25 +09:00: Translated `de_paper/paper/paper_NExT.md` into Korean academic prose and uploaded the translated manuscript to Notion as a child page under the latest `paper_NExT` page.
 - 2026-04-22 02:47 +09:00: Completed final venue-polish pass on `de_paper/paper/paper_NExT.md`: shortened and sharpened the title/abstract for workshop reviewers, and added `de_paper/paper/SUBMISSION_CHECKLIST.md` covering manuscript, figures, references, anonymity, and submission-form checks.
 - 2026-04-22 02:38 +09:00: Rewrote `de_paper/paper/paper_NExT.md` into a cleaner workshop-submission draft. Removed encoding corruption, tightened the main claim around routing legibility and the translation gap, simplified the contribution structure, reduced defensive discussion of failed behavioral predictions, and kept the LLM probe clearly secondary in Appendix A.

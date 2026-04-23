@@ -49,7 +49,9 @@ That third result is important for the NExT-Game workshop framing. The paper is 
 
 **Role specialization in cooperative MARL.** Prior work on role-based MARL often treats roles as latent structure to be discovered from trajectories. ROMA [1], for example, learns latent role representations that encourage specialization. Our setting is different: role identity is known, injected into the observation, and used to study how architecture exploits that information. The question is not "which roles emerge?" but "how legibly does the policy encode role-conditioned strategic dependency?"
 
-**Relational reasoning and attention.** Attention has been used as a relational inductive bias in reinforcement learning [2] and multi-agent learning [3, 4]. These works motivate attention as a way to focus on relevant entities, but they do not directly analyze role-to-role routing structure as a measurable object. Our use of attention is narrower and more diagnostic: we treat attention weights as a readout of strategic dependency under controlled architectural ablations.
+**Relational reasoning and attention.** Attention has been used as a relational inductive bias in reinforcement learning [2] and multi-agent learning [3, 4]. These works motivate attention as a way to focus on relevant entities, but they do not directly analyze role-to-role routing structure as a measurable object. Our use of attention is narrower and more diagnostic: we treat attention weights as a comparative readout of strategic dependency under controlled architectural ablations, not as a direct causal explanation of policy behavior.
+
+**Attention faithfulness and interpretability.** The interpretability of attention weights has been debated extensively in NLP. Jain and Wallace [9] show that attention weights can diverge from gradient-based feature importance, while Serrano and Smith [10] and Bastings and Filippova [11] further analyze when attention tracks model sensitivity and when it does not. Wiegreffe and Pinter [12] argue that these critiques do not make attention useless, but instead narrow the conditions under which it should be interpreted. We adopt that more cautious position here: attention weights are useful as comparative and ordinal diagnostics of routing structure, and we cross-check them against gradient-based attribution rather than treating them as guaranteed measures of causal information flow.
 
 **Cooperative MARL optimization.** MAPPO [5] and QMIX [6] are strong cooperative baselines, but neither is designed to make role-conditioned dependency legible. We hold the optimizer fixed and vary policy structure, so the differences we report are architectural rather than optimization-driven.
 
@@ -251,6 +253,8 @@ Per-role heatmaps are shown below.
 
 The key structural point is not the exact ranking alone, but that Condition 1 produces a role-specific sensitivity profile while Condition 2 does not. This shows that intra-set self-attention contributes distinct relational structure.
 
+Condition 2's zero `Delta_max` is structurally guaranteed: without intra-set self-attention, ally token representations are not contextualized with respect to one another before cross-attention, so formation changes cannot induce differential intra-ally weighting. This is an intended ablation result, not a behavioral finding.
+
 #### 5.2.2 Role-Routing Matrix
 
 We next aggregate ally cross-attention weights by agent role and ally role. We verified that reversing ally-slot order leaves the routing matrix unchanged, ruling out a slot-position artifact.
@@ -275,7 +279,7 @@ This is the clearest evidence of routing legibility. Strike routes primarily to 
 
 #### 5.2.3 MLP Gradient Attribution
 
-Because Condition 3 has no attention weights, we build an MLP pseudo-routing view through input gradients.
+Because Condition 3 has no attention weights, we build an MLP pseudo-routing view through input gradients. We do not treat these two quantities as identical. Attention weights need not faithfully measure causal feature use [9-12], so our goal is not to claim exact agreement between attention and gradients. Instead, we use them as complementary diagnostics: attention reveals whether routing is structurally concentrated, while gradients provide a second check on whether the MLP baseline is using role information in a comparably legible way.
 
 **Table 4: Gradient attribution by condition and role.**
 
@@ -386,7 +390,7 @@ The paper has several clear limitations.
 
 1. **Environment scope.** The main evidence comes from one custom SMACv2 setup plus one simpler grid-world replication.
 2. **Seed sensitivity.** The routing direction is reasonably stable, but magnitude varies across seeds.
-3. **Cross-metric comparison.** Attention routing and MLP gradient pseudo-routing are not identical quantities, so we interpret their variance gap as an ordinal concentration comparison rather than a literal apples-to-apples metric.
+3. **Cross-metric comparison.** Attention routing and MLP gradient pseudo-routing are not identical quantities, and prior work has shown that attention weights need not coincide with causal feature importance [9-12]. We therefore interpret their variance gap as an ordinal concentration comparison rather than a literal apples-to-apples metric.
 4. **Injected labels.** Role identity is manually inserted into observations, which is appropriate for a controlled mechanism study but limits external validity.
 
 ### 6.5 Why This Matters for NExT-Game
@@ -448,4 +452,12 @@ We do not treat this appendix as core evidence for the MARL claims. Its role is 
 
 [8] Drew Fudenberg and David K. Levine. *The Theory of Learning in Games*. MIT Press, 1998.
 
-[9] Adam Lerer and Alexander Peysakhovich. Maintaining Cooperation in Complex Social Dilemmas Using Deep Reinforcement Learning. *arXiv preprint arXiv:1707.01068*, 2017.
+[9] Sarthak Jain and Byron C. Wallace. Attention is not Explanation. In *Proceedings of NAACL-HLT*, 2019.
+
+[10] Sofia Serrano and Noah A. Smith. Is Attention Interpretable? In *Proceedings of ACL*, 2019.
+
+[11] Jasmijn Bastings and Katja Filippova. The Elephant in the Interpretability Room: Why Use Attention as Explanation When We Have Saliency Methods? In *Proceedings of the Third BlackboxNLP Workshop*, 2020.
+
+[12] Sarah Wiegreffe and Yuval Pinter. Attention is not not Explanation. In *Proceedings of EMNLP-IJCNLP*, 2019.
+
+[13] Adam Lerer and Alexander Peysakhovich. Maintaining Cooperation in Complex Social Dilemmas Using Deep Reinforcement Learning. *arXiv preprint arXiv:1707.01068*, 2017.
