@@ -11,19 +11,19 @@ SMACv2 does not natively support pre-defined role labels in observations. We inj
 
 Each agent receives a 65-dimensional entity-centric observation structured as four named token groups:
 
-\begin{align*}
-\texttt{self\_tok}   &\in \mathbb{R}^{8}  && \text{position(2), health(1), shield(1), role\_onehot(3), pad(1)} \\
-\texttt{ally\_tok}   &\in \mathbb{R}^{16} && \text{2 allies} \times \text{8: rel\_pos(2), health(1), shield(1), role\_onehot(3), alive(1)} \\
-\texttt{enemy\_tok}  &\in \mathbb{R}^{16} && \text{2 enemies} \times \text{8: rel\_pos(2), health(1), shield(1), type\_conf(3), alive(1)} \\
-\texttt{zone\_tok}   &\in \mathbb{R}^{18} && \text{3 zones} \times \text{6: rel\_pos(2), owned(1), contest(1), value(1), pad(1)} \\
-\texttt{masks}       &\in \mathbb{R}^{7}  && \text{validity flags for ally/enemy/zone slots}
-\end{align*}
+\begin{itemize}
+  \item \texttt{self\_tok} $\in \mathbb{R}^{8}$: position(2), health(1), shield(1), role\_onehot(3), pad(1).
+  \item \texttt{ally\_tok} $\in \mathbb{R}^{16}$: 2 allies $\times$ 8 dims with rel\_pos(2), health(1), shield(1), role\_onehot(3), alive(1).
+  \item \texttt{enemy\_tok} $\in \mathbb{R}^{16}$: 2 enemies $\times$ 8 dims with rel\_pos(2), health(1), shield(1), type\_conf(3), alive(1).
+  \item \texttt{zone\_tok} $\in \mathbb{R}^{18}$: 3 zones $\times$ 6 dims with rel\_pos(2), owned(1), contest(1), value(1), pad(1).
+  \item \texttt{masks} $\in \mathbb{R}^{7}$: validity flags for ally, enemy, and zone slots.
+\end{itemize}
 
 Role one-hots occupy 3 dimensions in \texttt{self\_tok[4:7]} and in each ally slot (\texttt{ally\_tok[12:15]}, \texttt{ally\_tok[20:23]}). This placement is structural: the attention mechanism encodes these into Q (from self) and K/V (from ally), creating a direct role-pair routing path (Section~\ref{sec:theory}).
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/slic_architecture}
+  \includegraphics[width=\linewidth]{../../smacv2_poc/results/plots/new/SLIC (1).png}
   \caption{SLIC architecture (Condition~1 --- Full). Four entity token groups are
     encoded by dedicated linear layers. Intra-Set Self-Attention contextualises each
     entity set independently. Cross-Attention uses the self-embedding as query and
@@ -64,7 +64,8 @@ All attention computations apply \texttt{key\_padding\_mask} from the observatio
 All conditions use MAPPO~\cite{mappo} with the following hyperparameters, kept constant across all conditions:
 
 \begin{center}
-\begin{tabular}{ll}
+\small
+\begin{tabular}{p{0.34\linewidth}p{0.5\linewidth}}
 \toprule
 Hyperparameter & Value \\
 \midrule
@@ -79,7 +80,7 @@ Optimizer & Adam, lr $= 3 \times 10^{-4}$ \\
 Batch size & 512 \\
 Mini-batch size & 64 \\
 PPO epochs per update & 4 \\
-Centralized critic & MLP on concatenated obs ($65 \times 3 = 195$ dims) \\
+Centralized critic & MLP on concatenated observations ($65 \times 3 = 195$ dims) \\
 Checkpoint interval & every 200k steps \\
 \bottomrule
 \end{tabular}

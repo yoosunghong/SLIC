@@ -1,0 +1,45 @@
+\documentclass{article}
+
+\PassOptionsToPackage{numbers,compress}{natbib}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{icml2026_template/icml2026}
+\makeatletter
+\global\icml@noticeprintedtrue
+\makeatother
+
+\icmltitlerunning{Routing Legibility in Cooperative MARL}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Routing Legibility in Cooperative MARL:\\
+Measuring the Translation Gap Between Theory-Informed Roles and Learned Conventions}
+
+\begin{icmlauthorlist}
+\icmlauthor{Anonymous Authors}{}
+\end{icmlauthorlist}
+
+\icmlkeywords{multi-agent reinforcement learning, attention, game-theoretic learning, strategic conventions}
+
+\vskip 0.3in
+]
+
+\input{abstract}
+\input{introduction}
+\input{related_work}
+\input{theory}
+\input{method}
+\input{experiments}
+\input{discussion}
+
+\bibliographystyle{icml2026_template/icml2026}
+\bibliography{refs}
+
+\end{document}

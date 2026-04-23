@@ -3,7 +3,7 @@
 
 \subsection{The Routing Problem in Heterogeneous MARL}
 
-In cooperative MARL with heterogeneous roles, agents must not only follow their own behavioral mandate but also identify \emph{which teammates} are most relevant to their decision at each timestep. This is a routing problem: given a set of ally entities, which subset should a given agent attend to, and how strongly?
+In cooperative MARL with heterogeneous roles, agents must not only follow their own behavioral mandate but also identify \emph{which teammates} are most relevant to their decision at each timestep. This is a routing problem: given a set of ally entities, which subset should a given agent condition on, and how strongly?
 
 Role labels provide a natural signal for this selection. A ranged attacker (Strike) benefits most from knowing the position of the frontline tank (Vanguard), not the healer. A healer (Support) prioritizes the most at-risk ally. These routing preferences are determined by role-pair relationships, not spatial proximity alone. The central question of this paper is: \emph{do different policy architectures differ in how effectively they exploit role labels as routing signals?}
 
@@ -13,7 +13,7 @@ In an MLP policy, the role label is concatenated with all other observation feat
 \[
 h = \text{MLP}([o_{\text{pos}},\ o_{\text{hp}},\ r_{\text{onehot}},\ \ldots])
 \]
-The computation ``which entity to attend to given my role'' is not structurally encoded. It must be implicitly learned as a feature interaction buried in weight products $W_1 W_2 \cdots W_n$. The MLP has no structural inductive bias toward routing by role-pair. Gradient attribution confirms this: role one-hot dimensions in Condition 3 carry 3.9--4.3$\times$ less gradient signal than spatial features (Section~\ref{sec:experiments}), while the attention mechanism produces 5$\times$ more structured routing patterns.
+The computation ``which entity to condition on given my role'' is not structurally encoded. It must be implicitly learned as a feature interaction buried in weight products $W_1 W_2 \cdots W_n$. The MLP has no structural inductive bias toward routing by role-pair. Gradient attribution confirms that role-label signal is much weaker than spatial signal in the MLP baseline (Section~\ref{sec:experiments}), while the attention mechanism produces markedly more structured routing patterns.
 
 Note that this does not claim MLP routing is structurally impossible. The claim is calibrated: attention provides a \emph{more direct structural inductive bias} for role-pair routing. Whether this bias activates is verified empirically.
 
@@ -37,7 +37,7 @@ This computation is short (one matrix multiplication per head) and attributable:
 
 Before cross-attention, each entity group passes through an Intra-Set Self-Attention block. This provides relational context within the ally set before the agent's query is formed. Specifically, the ally token for Vanguard can be enriched by its relationship to the Support token before entering the cross-attention Key computation.
 
-This explains the performance gap between Condition 1 (Full) and Condition 2 (No Self-Attn): without intra-set contextualization, Keys and Values entering cross-attention are computed from raw entity embeddings without relational structure. The 7pp performance degradation (0.80 vs.\ 0.73) is consistent with this: intra-set self-attention contributes beyond the role-routing path, but the routing mechanism itself is primarily located in cross-attention.
+This explains the performance gap between Condition 1 (Full) and Condition 2 (No Self-Attn): without intra-set contextualization, Keys and Values entering cross-attention are computed from raw entity embeddings without relational structure. Intra-set self-attention contributes beyond the role-routing path, but the routing mechanism itself is primarily located in cross-attention.
 
 \subsection{Testable Predictions}
 
@@ -50,4 +50,4 @@ The structural argument generates four testable predictions, evaluated in Sectio
   \item Strike attends preferentially to Support (healer-seeking behavior). \textbf{[REVISED: Strike$\to$Vanguard dominant]}
 \end{enumerate}
 
-Predictions 3 and 4 are revised: the emergent routing pattern differs from the domain-knowledge prediction but remains tactically coherent (Section~\ref{sec:discussion}).
+Predictions 3 and 4 are revised: the emergent routing pattern differs from the domain-knowledge prediction but remains tactically coherent. This is the paper's central translation-gap result rather than a failure case.

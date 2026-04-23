@@ -2,6 +2,13 @@
 
 ## Recent Ops
 
+- 2026-04-23 15:33 +09:00: Removed the empty affiliation block from the ICML draft, tightened the routing matrix table to fit the column, and reformatted the claim-summary bullets to stop label overflow before rebuilding the PDF.
+- 2026-04-23 15:20 +09:00: Updated the NExT submission markdown/TeX drafts to mention the custom grid-world as a secondary structural replication, created `de_paper/paper/paper_NExT_submission.md`, and prepared a fresh ICML PDF rebuild.
+- 2026-04-23 15:02 +09:00: Re-added `win_rate_curves.png` to the ICML-format draft and created `de_paper/paper/paper_NExT_submission_integrated.md` as a single integrated Markdown manuscript matching the tightened submission version.
+- 2026-04-23 14:38 +09:00: Downloaded the official ICML 2026 LaTeX style files, created `de_paper/paper/main_icml.tex` + `refs.bib`, and verified an ICML-format workshop draft build at 7 pages total after BibTeX.
+- 2026-04-23 14:07 +09:00: Applied intensive workshop-focused revisions to `de_paper/paper/{main,abstract,introduction,related_work,theory,experiments,discussion}.tex` and verified the paper builds with `pdflatex`.
+- 2026-04-23 13:22 +09:00: Created `de_paper/paper/paper_NExT_revised_v1.md` as the first intensive workshop-revision draft, tightening scope and fixing key submission-readiness issues from the review pass.
+- 2026-04-23 13:15 +09:00: Reviewed `de_paper/paper/paper_NExT.md` for ICML 2026 NExT-Game workshop readiness; identified page-budget, methodological-clarity, and framing risks before submission.
 - 2026-04-21 01:50 +09:00: Restarted `smacv2_poc` Condition 4 training for seeds 3 and 4 from latest checkpoints `cond4_seed3_step200192.pt` and `cond4_seed4_step200192.pt` after mid-run crash (`Status.ended` from SMACv2).
 
 ## Goal

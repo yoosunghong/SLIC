@@ -1,23 +1,34 @@
-\documentclass[11pt]{article}
+\documentclass{article}
 
+\PassOptionsToPackage{numbers,compress}{natbib}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{microtype}
-\usepackage[numbers]{natbib}
-\usepackage{xcolor}
 
-\title{Structured Role Differentiation via Label-Conditioned\\
-Intra-Set Self-Attention in Cooperative MARL}
+\usepackage{icml2026_template/icml2026}
 
-\author{Anonymous}
-\date{}
+\icmltitlerunning{Routing Legibility in Cooperative MARL}
 
 \begin{document}
 
-\maketitle
+\twocolumn[
+\icmltitle{Routing Legibility in Cooperative MARL:\\
+Measuring the Translation Gap Between Theory-Informed Roles and Learned Conventions}
+
+\begin{icmlauthorlist}
+\icmlauthor{Anonymous Authors}{}
+\end{icmlauthorlist}
+
+\icmlkeywords{multi-agent reinforcement learning, attention, game-theoretic learning, strategic conventions}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
 
 \input{abstract}
 
@@ -34,7 +45,6 @@ Intra-Set Self-Attention in Cooperative MARL}
 \input{discussion}
 
 \section*{References}
-\bibliographystyle{plainnat}
 \begin{thebibliography}{99}
 
 \bibitem{roma2020}

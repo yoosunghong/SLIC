@@ -2,81 +2,33 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\newlabel{sec:introduction}{{1}{1}{Introduction}{section.1}{}}
+\newlabel{sec:introduction}{{1}{1}{}{section.1}{}}
 \citation{roma2020}
-\citation{r3dm2025}
 \citation{zambaldi2018}
 \citation{entitycentric}
 \citation{qmix}
 \citation{mappo}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
-\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Role discovery in cooperative MARL.}{3}{section*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Relational reasoning in reinforcement learning.}{3}{section*.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Cooperative optimization without role interpretability.}{3}{section*.3}\protected@file@percent }
 \citation{maddpg}
 \citation{maattn}
-\@writefile{toc}{\contentsline {paragraph}{Attention-based MARL.}{4}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Theory: Role-Label-Conditioned Routing}{4}{section.3}\protected@file@percent }
-\newlabel{sec:theory}{{3}{4}{Theory: Role-Label-Conditioned Routing}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}The Routing Problem in Heterogeneous MARL}{4}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}MLP Cannot Structurally Encode Role-to-Role Routing}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Why Self-Attention Provides a Direct Routing Path}{5}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Intra-Set Self-Attention: Relational Context Before Routing}{5}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Testable Predictions}{6}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Method}{6}{section.4}\protected@file@percent }
-\newlabel{sec:method}{{4}{6}{Method}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Environment}{6}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Entity-Centric Observation}{7}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Policy Architecture}{7}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Condition 1 --- Full (proposed).}{7}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Condition 2 --- No Self-Attn.}{7}{section*.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces SLIC architecture (Condition~1 --- Full). Four entity token groups are encoded by dedicated linear layers. Intra-Set Self-Attention contextualises each entity set independently. Cross-Attention uses the self-embedding as query and each set as key/value. Red arrows highlight the role-conditioned routing path: the role one-hot in \texttt  {self\_tok} is projected into Q, while the role one-hots in \texttt  {ally\_tok} are projected into K/V, enabling structured role-pair attention routing without architectural hand-coding.}}{8}{figure.1}\protected@file@percent }
-\newlabel{fig:architecture}{{1}{8}{SLIC architecture (Condition~1 --- Full). Four entity token groups are encoded by dedicated linear layers. Intra-Set Self-Attention contextualises each entity set independently. Cross-Attention uses the self-embedding as query and each set as key/value. Red arrows highlight the role-conditioned routing path: the role one-hot in \texttt {self\_tok} is projected into Q, while the role one-hots in \texttt {ally\_tok} are projected into K/V, enabling structured role-pair attention routing without architectural hand-coding}{figure.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Condition 3 --- Role+MLP.}{8}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Condition 4 --- No-RoleLabel (shared policy).}{8}{section*.8}\protected@file@percent }
+\newlabel{sec:related}{{2}{2}{}{section.2}{}}
+\newlabel{sec:theory}{{3}{2}{}{section.3}{}}
+\newlabel{sec:method}{{4}{3}{}{section.4}{}}
 \citation{mappo}
-\@writefile{toc}{\contentsline {paragraph}{Condition 5 --- Flat-MLP baseline.}{9}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Padding safety.}{9}{section*.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Training Setup}{9}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Reward Structure}{9}{subsection.4.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experiments}{10}{section.5}\protected@file@percent }
-\newlabel{sec:experiments}{{5}{10}{Experiments}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Experimental Setup}{10}{subsection.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Track 1: Performance Comparison}{10}{subsection.5.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Track 1 performance on SMACv2 (Terran 3-agent scenario). Win rate is mean over 3 seeds (last 20 eval checkpoints).}}{10}{table.1}\protected@file@percent }
-\newlabel{tab:track1}{{1}{10}{Track 1 performance on SMACv2 (Terran 3-agent scenario). Win rate is mean over 3 seeds (last 20 eval checkpoints)}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Track 2: Role-to-Role Routing Analysis}{11}{subsection.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}Self-Attention Formation Sensitivity ($\Delta _{\max }$)}{11}{subsubsection.5.3.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces $\Delta _{\max }$ per role for Condition~1. Condition~2 has no intra-set self-attention; all weights are structurally zero.}}{11}{table.2}\protected@file@percent }
-\newlabel{tab:delta_max}{{2}{11}{$\Delta _{\max }$ per role for Condition~1. Condition~2 has no intra-set self-attention; all weights are structurally zero}{table.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}Cross-Role Routing Matrix}{11}{subsubsection.5.3.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Multi-seed role-routing matrix for Condition~1 (mean $\pm $ std, 3 seeds). Entry $(i,j)$ is the mean cross-attention weight assigned by role $i$ to ally slots occupied by role $j$. Diagonal entries are zero by construction.}}{12}{table.3}\protected@file@percent }
-\newlabel{tab:routing}{{3}{12}{Multi-seed role-routing matrix for Condition~1 (mean $\pm $ std, 3 seeds). Entry $(i,j)$ is the mean cross-attention weight assigned by role $i$ to ally slots occupied by role $j$. Diagonal entries are zero by construction}{table.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.3}MLP Gradient Attribution}{12}{subsubsection.5.3.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Gradient attribution across conditions. Spatial/Role ratio $\gg 1$ indicates role dimensions contribute less signal than spatial features to the output.}}{13}{table.4}\protected@file@percent }
-\newlabel{tab:gradient}{{4}{13}{Gradient attribution across conditions. Spatial/Role ratio $\gg 1$ indicates role dimensions contribute less signal than spatial features to the output}{table.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Claim Verification Summary}{13}{subsection.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{14}{section.6}\protected@file@percent }
-\newlabel{sec:discussion}{{6}{14}{Discussion}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Interpreting the Two Revised Predictions}{14}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Support $\Delta _{\max }$ highest, not Vanguard.}{14}{section*.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Strike$\to $Vanguard dominant, not Strike$\to $Support.}{14}{section*.12}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}What the Results Support}{15}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Limitations}{15}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Single environment.}{15}{section*.13}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Single-seed Track 2 (primary analysis).}{15}{section*.14}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Slot-ordering verification.}{15}{section*.15}\protected@file@percent }
-\bibstyle{plainnat}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{4}{SLIC architecture (Condition~1 --- Full). Four entity token groups are encoded by dedicated linear layers. Intra-Set Self-Attention contextualises each entity set independently. Cross-Attention uses the self-embedding as query and each set as key/value. Red arrows highlight the role-conditioned routing path: the role one-hot in \texttt {self\_tok} is projected into Q, while the role one-hots in \texttt {ally\_tok} are projected into K/V, enabling structured role-pair attention routing without architectural hand-coding}{figure.caption.1}{}}
+\newlabel{sec:experiments}{{5}{5}{}{section.5}{}}
+\newlabel{tab:track1}{{1}{5}{Track 1 performance on SMACv2. Win rate is the mean of final evaluation checkpoints}{table.caption.2}{}}
+\newlabel{tab:delta_max}{{2}{5}{$\Delta _{\max }$ per role for Condition~1. Condition~2 is omitted because $\Delta _{\max }$ is not defined once ally self-attention is removed}{table.caption.3}{}}
+\newlabel{tab:routing}{{3}{5}{Role-routing matrix for Condition~1. Entry $(i,j)$ is the mean cross-attention weight assigned by role $i$ to ally slots occupied by role $j$. Diagonal entries are zero by construction}{table.caption.4}{}}
+\newlabel{tab:gradient}{{4}{6}{Gradient attribution for the Role+MLP baseline (Condition~3). Spatial/Role ratio $\gg 1$ indicates role dimensions contribute less signal than spatial features to the output}{table.caption.5}{}}
+\newlabel{sec:discussion}{{6}{6}{}{section.6}{}}
 \bibcite{roma2020}{{1}{}{{}}{{}}}
 \bibcite{r3dm2025}{{2}{}{{}}{{}}}
 \bibcite{zambaldi2018}{{3}{}{{}}{{}}}
 \bibcite{entitycentric}{{4}{}{{}}{{}}}
 \bibcite{qmix}{{5}{}{{}}{{}}}
 \bibcite{mappo}{{6}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {paragraph}{Observation injection.}{16}{section*.16}\protected@file@percent }
 \bibcite{maddpg}{{7}{}{{}}{{}}}
 \bibcite{maattn}{{8}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{17}
+\gdef \@abspage@last{7}

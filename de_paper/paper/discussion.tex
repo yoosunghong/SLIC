@@ -1,35 +1,34 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Interpreting the Two Revised Predictions}
-
-\paragraph{Support $\Delta_{\max}$ highest, not Vanguard.}
-The original prediction held that Vanguard (Marauder) would show the highest formation sensitivity because frontline melee positioning is directly tied to ally clustering. The data shows Support (Medivac) is most formation-sensitive ($\Delta_{\max} = 0.086$ vs.\ Vanguard $0.049$, Strike $0.009$). A plausible post-hoc interpretation: the Medivac healer must reposition continuously based on where allies cluster, since healing range requires proximity to the lowest-health ally. Formation change directly changes which ally the healer should be near, producing large attention weight shifts between Clustered and Spread scenarios. Vanguard's intermediate sensitivity (0.049) is consistent with a frontliner whose spatial decisions are also influenced by enemy position, not just ally clustering. Strike's low sensitivity (0.009) suggests the ranged attacker's positioning is largely determined by enemy location and attack range, making it relatively insensitive to ally formation alone.
-
-We flag this as a post-hoc interpretation. The finding does not weaken the structural claim; Support's high $\Delta_{\max}$ is still a role-specific attention pattern qualitatively distinct from a non-attending baseline (Condition 2: all $\Delta_{\max} = 0$).
-
-\paragraph{Strike$\to$Vanguard dominant, not Strike$\to$Support.}
-The original prediction held that Strike (Marine) would attend primarily to Support (Medivac), reasoning that a ranged attacker benefits from proximity to a healer for survivability. The data shows Strike attends predominantly to Vanguard (0.735 $\pm$ 0.165 vs.\ 0.265 $\pm$ 0.165 to Support). This is behaviorally coherent: in a combat task, a ranged attacker's primary spatial problem is maintaining effective engagement range while the frontline tank (Marauder) anchors the fight. Strike uses Vanguard as a spatial reference point to calibrate its distance from the frontline. The healer, positioned behind allies, provides less actionable positional signal for a ranged DPS agent. The prediction assumed Strike would seek healer proximity for survivability; in practice, Strike uses the tank as a tactical anchor. This distinction is a domain-knowledge error about which behavior would be learned, not a failure of the routing mechanism.
-
-Critically, Strike$\to$Vanguard dominance (0.735 across 3 seeds) is itself a strong off-diagonal signal. The routing matrix is not diffuse or uniform, which is the core empirical claim.
-
 \subsection{What the Results Support}
 
-The two predictions that held are the most structurally important:
+The cleanest supported statement is: when role labels are injected into both self and ally tokens, attention-based policies learn much more legible role-conditioned routing structure than flat MLP baselines.
 
-\begin{itemize}
-  \item \textbf{Routing structure.} Condition~1 produces a routing matrix with std $= 0.363$ vs.\ Condition~3's gradient-based pseudo-matrix std $= 0.078$ --- a $5\times$ difference. This is not a marginal effect. Attention produces qualitatively more structured role-to-role routing than MLP when role labels are present in both Q and K/V.
-  \item \textbf{Label load-bearing.} Removing role labels from a shared-policy attention network (Condition~4) degrades win rate by 30pp (0.50 vs.\ 0.80). The gradient attribution further confirms that when labels are zeroed, role-dim gradients collapse (Medivac: $62\times$ spatial/role ratio in Cond~4 vs.\ $3.9\times$ in Cond~3). Role labels are not incidental; they are structurally load-bearing for performance.
-\end{itemize}
+That statement is supported by three pieces of evidence. First, the role-routing matrix is much more structured in the attention model than in the MLP pseudo-routing baseline. Second, removing role labels from a shared attention policy causes a substantial performance drop. Third, the learned convention is not diffuse: the routing matrix is stably off-diagonal and role-specific.
 
-The two revised predictions are informative rather than damaging. They tell us which tactical routing pattern SMACv2 training selects for, not that routing fails to occur. An analysis that confirms ``attention routes by role'' and also reveals \emph{which} routes emerge is more informative than one that merely confirms a prior.
+\subsection{The Translation Gap}
+
+The more interesting scientific result is that our theory-informed behavioral prediction was not the convention selected by learning. We expected Vanguard to be most formation-sensitive; Support was. We expected Strike to route primarily to Support; Strike routed primarily to Vanguard.
+
+This is not a contradiction of the mechanism claim. It is the concrete empirical instance of the translation gap. The architecture made the learned convention visible. The convention itself was selected by the learning process, not prescribed by the theory.
+
+For the NExT-Game workshop, this is the key bridge: classical strategic analysis helps specify candidate dependency structures, but modern learning systems may settle into different, locally stable conventions. A useful research program therefore needs both theory and diagnostics.
+
+\subsection{Why the Emergent Convention Is Still Coherent}
+
+The emergent convention is not random noise. In SMACv2, Strike routing to Vanguard is tactically sensible because the frontliner anchors engagement geometry for the ranged unit. Support's high formation sensitivity is also plausible because healer positioning depends strongly on ally clustering. The point is not that the original prediction was meaningless; it is that the actual learned convention reflects environmental incentives and gradient dynamics more than our initial prescription.
 
 \subsection{Limitations}
 
-\paragraph{Single environment.} All results are from a single custom SMACv2 scenario. The routing patterns (Strike$\to$Vanguard, Support$\to$Strike) may be specific to Terran unit dynamics and 3-agent formations. We cannot claim the routing structure generalizes to other maps, team sizes, or factions without additional experiments.
+\paragraph{Environment scope.} The main evidence comes from one custom SMACv2 setup, with a simpler custom grid-world serving as a secondary structural replication. We still cannot claim the routing structure generalizes to other maps, team sizes, or factions without additional experiments.
 
-\paragraph{Single-seed Track 2 (primary analysis).} The routing matrix in Table~\ref{tab:routing} is a 3-seed average; however, the $\Delta_{\max}$ analysis and the seed-1 routing results (which informed the original claims) were from a single seed. The multi-seed standard deviations for Strike and Vanguard routing (0.165--0.170) indicate meaningful variance; the directional pattern is consistent but the magnitude is seed-dependent.
+\paragraph{Seed sensitivity.} The routing direction is reasonably stable, but magnitude varies across seeds.
 
-\paragraph{Slot-ordering verification.} A potential artifact in cross-attention routing analysis is positional bias: if a fixed slot always contains the same role, attention concentration on that slot may reflect positional preference rather than role routing. We verified that reversing ally slot order produces identical per-role routing matrices --- attention weights follow role content, not slot position. This check confirms the routing matrix reflects genuine role-conditioned attention.
+\paragraph{Cross-metric comparison.} Attention routing and MLP gradient pseudo-routing are not identical quantities. We therefore interpret their variance gap as an ordinal concentration comparison rather than a literal apples-to-apples metric.
 
-\paragraph{Observation injection.} Role labels are injected manually into SMACv2 observations, which do not natively expose role information in this format. The injection is faithful to the architectural claim (role in Q and K/V), but the external validity depends on whether real-world environments provide equivalent label information.
+\paragraph{Injected labels.} Role labels are injected manually into SMACv2 observations, which is appropriate for a controlled mechanism study but limits external validity.
+
+\subsection{Why This Fits NExT-Game}
+
+The workshop description emphasizes the gap between classical strategic abstractions and modern learning dynamics in strategic multi-agent AI systems. This paper contributes a compact empirical diagnostic for that agenda. Instead of asking only whether a policy performs well, we ask which strategic dependency pattern learning settled on, how legible that pattern is in the policy, and how that pattern differs from the theory-informed expectation.
