@@ -1,0 +1,62 @@
+# SMACv2 scaling-study configuration.
+#
+# All 5 configs share the hyperparameters below. Only env.composition and
+# env.n_enemies change per run. obs_dim is FIXED at 182 (pad-to-max for 9v9).
+#
+# Run:
+#   python training/train_scaling.py --config_name 3v3_balanced --condition 1 --seed 0
+
+configs:
+  3v3_balanced:
+    composition:       {Strike: 1, Vanguard: 1, Support: 1}
+    n_enemies:         3
+
+  6v6_balanced:
+    composition:       {Strike: 2, Vanguard: 2, Support: 2}
+    n_enemies:         6
+
+  9v9_balanced:
+    composition:       {Strike: 3, Vanguard: 3, Support: 3}
+    n_enemies:         9
+
+  6v6_strike_heavy:
+    composition:       {Strike: 3, Vanguard: 2, Support: 1}
+    n_enemies:         6
+
+  6v6_support_heavy:
+    composition:       {Strike: 1, Vanguard: 2, Support: 3}
+    n_enemies:         6
+
+env:
+  map_name:          10gen_terran
+  max_steps:         200
+  obs_dim:           182    # pad-to-max (9v9 ceiling) — matches scaling_models.OBS_DIM
+  action_dim:        6
+  team_reward_alpha: 0.2
+
+training:
+  total_steps:            2000000
+  batch_size:             512
+  minibatch_size:         64
+  gamma:                  0.99
+  gae_lambda:             0.95
+  clip_eps:               0.2
+  entropy_coeff:          0.03
+  lr:                     1.0e-4
+  ppo_epochs:             3
+  max_grad_norm:          0.5
+  log_interval:           10000
+  checkpoint_interval:    200000
+  n_eval_episodes:        10
+  n_seeds:                3
+  early_stop_threshold:   0.85
+  early_stop_patience:    5
+
+model:
+  embed_dim:  64
+  num_heads:  2
+  action_dim: 6
+
+resources:
+  num_cpu_threads: 2     # lowered vs. smacv2.yaml so 3 seeds can run concurrently
+  vram_fraction:   0.30  # 3 parallel processes × 30% ≈ 90% of 4 GB VRAM

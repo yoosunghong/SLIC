@@ -48,7 +48,22 @@
       "Bash(python -c \"import sys; s=sys.stdin.read\\(\\); print\\(s[:3000]\\)\")",
       "Bash(grep -E \"^\\\\.env$|^\\\\.env\\\\s\" D:/Github/SLIC/.gitignore)",
       "Bash(python -c \"from dotenv import load_dotenv; import os; load_dotenv\\(\\); k=os.environ.get\\('GEMINI_API_KEY'\\); print\\('KEY_PRESENT' if k else 'MISSING', 'len=', len\\(k\\) if k else 0\\)\")",
-      "Bash(python -c \"import google.generativeai as genai\")"
+      "Bash(python -c \"import google.generativeai as genai\")",
+      "Bash(python test_scaling_smoke.py)",
+      "Bash(python -u test_scaling_smoke.py)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(py --version)",
+      "Bash(py -c \"import sys;print\\(sys.executable\\)\")",
+      "Read(//c/Users/PC/anaconda3/**)",
+      "Bash(/c/Users/PC/anaconda3/python.exe --version)",
+      "Bash(sed -i 's/—/-/g' test_scaling_smoke.py)",
+      "Bash(/c/Users/PC/anaconda3/python.exe -u test_scaling_smoke.py)",
+      "Bash(/c/Users/PC/anaconda3/python.exe -c \"import smacv2; print\\(smacv2.__file__\\)\")",
+      "Bash(bash run_scaling_batch.sh)",
+      "Bash(echo \"batch_launcher_pid=$!\")",
+      "Bash(mkdir -p C:/Users/PC/Documents/GitHub/de_paper/smacv2_poc/results_scaling/logs)",
+      "Bash(disown)",
+      "Bash(echo \"launcher_pid=$!\")"
     ]
   }
 }

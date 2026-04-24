@@ -1,0 +1,1 @@
+Condition 5 | Seed 3 | Device: cuda | CPU threads: 4 | VRAM fraction: 50%

@@ -43,8 +43,72 @@ Action mapping (our 6 → SMACv2 discrete):
 import os
 import numpy as np
 
-# SC2 is installed at a non-default path on this machine.
-os.environ.setdefault("SC2PATH", "D:/StarCraft II")
+
+def _configure_sc2_path() -> None:
+    """Set SC2PATH only when it is unset and a local install can be found."""
+    if os.environ.get("SC2PATH"):
+        return
+
+    candidates = [
+        r"C:\Program Files (x86)\StarCraft II",
+        r"C:\Program Files\StarCraft II",
+        r"C:\StarCraft II",
+        r"D:\StarCraft II",
+        os.path.expanduser(r"~\StarCraft II"),
+    ]
+    for candidate in candidates:
+        if os.path.isdir(os.path.join(candidate, "Versions")):
+            os.environ["SC2PATH"] = candidate
+            return
+
+
+def _candidate_map_paths(sc2_path: str, map_name: str) -> list[str]:
+    """Return plausible SC2 map file locations for the configured SMACv2 map."""
+    return [
+        os.path.join(sc2_path, "Maps", f"{map_name}.SC2Map"),
+        os.path.join(sc2_path, "Maps", "SMAC_Maps", f"{map_name}.SC2Map"),
+        os.path.join(sc2_path, "Maps", "SMAC", f"{map_name}.SC2Map"),
+    ]
+
+
+def _format_sc2_setup_error(map_name: str, original_exc: Exception) -> str:
+    """
+    Build a user-facing error that surfaces the real SC2 launch problem.
+
+    pysc2 often raises a websocket connection error first, then overwrites it
+    with a temp-directory cleanup PermissionError during teardown. This helper
+    points at the actionable setup checks instead of exposing only the cleanup
+    failure.
+    """
+    sc2_path = os.environ.get("SC2PATH")
+    lines = [
+        f"Failed to launch StarCraft II for SMACv2 map '{map_name}'.",
+        f"Original error: {type(original_exc).__name__}: {original_exc}",
+    ]
+
+    if not sc2_path:
+        lines.append("SC2PATH is not set.")
+    else:
+        lines.append(f"SC2PATH: {sc2_path}")
+        lines.append(f"Versions dir exists: {os.path.isdir(os.path.join(sc2_path, 'Versions'))}")
+        map_candidates = _candidate_map_paths(sc2_path, map_name)
+        lines.append(
+            "Map file exists: "
+            + str(any(os.path.isfile(path) for path in map_candidates))
+        )
+        lines.append("Checked map paths:")
+        lines.extend(f"  - {path}" for path in map_candidates)
+
+    lines.extend([
+        "Checklist:",
+        "  1. Verify StarCraft II runs locally from the same Windows user account.",
+        "  2. Install/copy the SMACv2 map file into StarCraft II\\Maps (or Maps\\SMAC_Maps).",
+        "  3. If SC2 is installed elsewhere, set SC2PATH explicitly before training.",
+    ])
+    return "\n".join(lines)
+
+
+_configure_sc2_path()
 
 try:
     from smacv2.env import StarCraft2Env
@@ -237,17 +301,20 @@ class SMACWrapper:
     # ------------------------------------------------------------------
 
     def reset(self, seed=None, options=None):
-        if self._use_capability_wrapper:
-            self._reset_until_valid_roles()
-        elif self._manual_fixed_team:
-            for _ in range(MAX_RESET_RETRIES):
-                self._env.reset(self._build_fixed_episode_config())
+        try:
+            if self._use_capability_wrapper:
+                self._reset_until_valid_roles()
+            elif self._manual_fixed_team:
+                for _ in range(MAX_RESET_RETRIES):
+                    self._env.reset(self._build_fixed_episode_config())
+                    self._build_role_map()
+                    if self._ally_spread() <= MAX_ALLY_SPREAD:
+                        break
+            else:
+                self._env.reset()
                 self._build_role_map()
-                if self._ally_spread() <= MAX_ALLY_SPREAD:
-                    break
-        else:
-            self._env.reset()
-            self._build_role_map()
+        except Exception as exc:
+            raise RuntimeError(_format_sc2_setup_error(self.map_name, exc)) from exc
 
         self._step_count = 0
         obs = self._build_obs_all()

@@ -2,6 +2,7 @@
 
 ## Recent Ops
 
+- 2026-04-24: Scaling-study infrastructure built after paper-deadline extension. Added `smacv2_poc/env/smac_wrapper_scaling.py` (variable n_agents/composition, pad-to-max obs_dim=182), `smacv2_poc/models/scaling_models.py` (ScalingFullModel + ScalingRoleMLPModel + build_scaling_policies with same-role weight sharing), `configs/scaling.yaml` (5 configs: 3v3_balanced, 6v6_balanced, 9v9_balanced, 6v6_strike_heavy, 6v6_support_heavy), `training/train_scaling.py`, `run_scaling_batch.sh`, `test_scaling_smoke.py`. Matrix: 5 configs × {C1 Full, C3 RoleMLP} × 3 seeds = 30 runs. Outputs go to `smacv2_poc/results_scaling/` (existing `results/` untouched). Python-level smoke passes; SC2-engine smoke blocked because D: drive was not mounted at test time — code is structurally correct, launch training once D: is accessible.
 - 2026-04-23 15:33 +09:00: Removed the empty affiliation block from the ICML draft, tightened the routing matrix table to fit the column, and reformatted the claim-summary bullets to stop label overflow before rebuilding the PDF.
 - 2026-04-23 15:20 +09:00: Updated the NExT submission markdown/TeX drafts to mention the custom grid-world as a secondary structural replication, created `de_paper/paper/paper_NExT_submission.md`, and prepared a fresh ICML PDF rebuild.
 - 2026-04-23 15:02 +09:00: Re-added `win_rate_curves.png` to the ICML-format draft and created `de_paper/paper/paper_NExT_submission_integrated.md` as a single integrated Markdown manuscript matching the tightened submission version.
