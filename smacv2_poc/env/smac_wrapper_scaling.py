@@ -92,17 +92,25 @@ ZONE_POSITIONS_NORM = np.array([
 ], dtype=np.float32)
 
 # ---------------------------------------------------------------------------
-# Reward shaping (identical to smac_wrapper.py)
+# Reward shaping
 # ---------------------------------------------------------------------------
 APPROACH_BONUS          = 0.02
 ATTACK_BONUS            = 0.05
 FRONTLINE_BONUS         = 0.05
-TOO_CLOSE_PENALTY       = 0.02
+TOO_CLOSE_PENALTY       = 0.03
 SUPPORT_PROXIMITY_BONUS = 0.01
 HEAL_RANGE_BONUS        = 0.05
 REAR_PENALTY            = 0.02
-TEAM_ALPHA              = 0.2
+FORMATION_BONUS         = 0.02   # Marine behind Vanguard
+SURVIVAL_BONUS          = 0.005  # per-step alive reward
+HP_PRESERVE_BONUS       = 0.02   # per-step bonus scaled by current HP ratio (combat roles)
+# Raised from 0.2: at alpha=0.2 kill/win signals (~1.0 total) were buried by shaped
+# rewards (~19-25 per episode), so agents optimized positioning but not killing.
+TEAM_ALPHA              = 0.35
 
+# SC2 unit ranges (normalized, 32-tile map):
+#   Marine attack range  = 5 tiles → 0.156
+#   Marauder attack range = 6 tiles → 0.188  (Marauder has longer range but is tankier)
 MARINE_ATTACK_RANGE  = 0.156
 MARINE_TOO_CLOSE     = 0.063
 MARAUDER_FRONT_RANGE = 0.188
@@ -454,29 +462,79 @@ class ScalingSMACWrapper:
             role = self._agent_roles[i]
 
             if role == 0:
-                # Strike (Marine) — ranged DPS
+                # Strike (Marine) — kiting DPS, fights from behind Vanguard
                 if alive_enemy_pos:
                     near = min(alive_enemy_pos, key=lambda p: _dist(pos, p))
                     d = _dist(pos, near)
-                    rewards[i] += APPROACH_BONUS * max(0.0, MARINE_ATTACK_RANGE - d)
+
                     if d < MARINE_TOO_CLOSE:
+                        # Inside melee range: penalize (Marine should kite out)
                         rewards[i] -= TOO_CLOSE_PENALTY
+                    elif d <= MARINE_ATTACK_RANGE:
+                        # Kiting sweet spot: reward peaks at attack range edge, not at d=0
+                        # gradient pushes Marine to stay at MARINE_ATTACK_RANGE, not charge in
+                        rewards[i] += APPROACH_BONUS * (d / MARINE_ATTACK_RANGE)
+                    else:
+                        # Out of range: mild penalty to keep Marine from retreating too far
+                        rewards[i] -= APPROACH_BONUS * min(1.0, (d - MARINE_ATTACK_RANGE) / MARINE_ATTACK_RANGE)
+
+                    # Formation bonus: Marine is behind Vanguard AND still within own attack range.
+                    # Both conditions must hold: d_marine > d_vanguard (Marine farther back)
+                    # AND d_marine <= MARINE_ATTACK_RANGE (Marine can still shoot).
+                    # Without the range gate, formation bonus could pull Marine beyond its range.
+                    if d <= MARINE_ATTACK_RANGE:
+                        vg = next(
+                            (j for j in range(self.n_agents)
+                             if self._agent_roles[j] == 1
+                             and agents.get(self._agent_ids[j]) is not None
+                             and agents[self._agent_ids[j]].health > 0),
+                            None,
+                        )
+                        if vg is not None:
+                            vg_near = min(alive_enemy_pos, key=lambda p: _dist(cur_pos[vg], p))
+                            vg_d = _dist(cur_pos[vg], vg_near)
+                            if d > vg_d:
+                                rewards[i] += FORMATION_BONUS
+
                 if int(actions[i]) == 5 and alive_enemy_pos:
                     nd = min(_dist(pos, ep) for ep in alive_enemy_pos)
                     if nd <= MARINE_ATTACK_RANGE:
                         rewards[i] += ATTACK_BONUS
+
+                rewards[i] += SURVIVAL_BONUS
+                # HP preservation: kiting earns this by taking less damage
+                rewards[i] += HP_PRESERVE_BONUS * _safe_ratio(unit.health, unit.health_max)
+
             elif role == 1:
-                # Vanguard (Marauder) — frontline
+                # Vanguard (Marauder) — frontline tank, stays closer to enemies than Marine
                 if alive_enemy_pos:
                     near = min(alive_enemy_pos, key=lambda p: _dist(pos, p))
                     d = _dist(pos, near)
-                    rewards[i] += APPROACH_BONUS * max(0.0, MARAUDER_FRONT_RANGE - d)
+                    # Normalize approach bonus to [0, APPROACH_BONUS] regardless of range scale
                     if d < MARAUDER_FRONT_RANGE:
+                        rewards[i] += APPROACH_BONUS * (1.0 - d / MARAUDER_FRONT_RANGE)
                         rewards[i] += FRONTLINE_BONUS
+                    else:
+                        rewards[i] -= APPROACH_BONUS * min(1.0, (d - MARAUDER_FRONT_RANGE) / MARAUDER_FRONT_RANGE)
+
+                    # Formation bonus: Marauder closer to enemy than any Strike ally → is in front
+                    strike_ds = [
+                        _dist(cur_pos[j], min(alive_enemy_pos, key=lambda p: _dist(cur_pos[j], p)))
+                        for j in range(self.n_agents)
+                        if self._agent_roles[j] == 0
+                        and agents.get(self._agent_ids[j]) is not None
+                        and agents[self._agent_ids[j]].health > 0
+                    ]
+                    if strike_ds and d < min(strike_ds):
+                        rewards[i] += FORMATION_BONUS
+
                 if int(actions[i]) == 5 and alive_enemy_pos:
                     nd = min(_dist(pos, ep) for ep in alive_enemy_pos)
                     if nd <= MARAUDER_FRONT_RANGE:
                         rewards[i] += ATTACK_BONUS
+
+                rewards[i] += SURVIVAL_BONUS
+                rewards[i] += HP_PRESERVE_BONUS * _safe_ratio(unit.health, unit.health_max)
             else:
                 # Support (Medivac) — heal the lowest-HP non-Support ally
                 candidates = [
@@ -512,6 +570,8 @@ class ScalingSMACWrapper:
                     if _dist(pos, ep) < ENEMY_DANGER_DIST:
                         rewards[i] -= REAR_PENALTY
                         break
+
+                rewards[i] += SURVIVAL_BONUS
         return rewards
 
     # ------------------------------------------------------------------

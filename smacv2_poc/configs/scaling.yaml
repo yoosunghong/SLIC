@@ -3,36 +3,47 @@
 # All 5 configs share the hyperparameters below. Only env.composition and
 # env.n_enemies change per run. obs_dim is FIXED at 182 (pad-to-max for 9v9).
 #
+# Enemy composition mirrors the original 3v3 setup (smac_wrapper.py):
+#   ally  = Marine × k + Marauder × k + Medivac × k  (with healer)
+#   enemy = Marine × 2k + Marauder × k               (no healer)
+# This is asymmetric but consistent with the original experiment design.
+# All 5 conditions use the same enemy composition → comparisons remain fair.
+#
 # Run:
 #   python training/train_scaling.py --config_name 3v3_balanced --condition 1 --seed 0
 
 configs:
   3v3_balanced:
-    composition:       {Strike: 1, Vanguard: 1, Support: 1}
-    n_enemies:         3
+    composition:            {Strike: 1, Vanguard: 1, Support: 1}
+    enemy_composition:      {Strike: 2, Vanguard: 1, Support: 0}
+    n_enemies:              3
 
   6v6_balanced:
-    composition:       {Strike: 2, Vanguard: 2, Support: 2}
-    n_enemies:         6
+    composition:            {Strike: 2, Vanguard: 2, Support: 2}
+    enemy_composition:      {Strike: 4, Vanguard: 2, Support: 0}
+    n_enemies:              6
 
   9v9_balanced:
-    composition:       {Strike: 3, Vanguard: 3, Support: 3}
-    n_enemies:         9
+    composition:            {Strike: 3, Vanguard: 3, Support: 3}
+    enemy_composition:      {Strike: 6, Vanguard: 3, Support: 0}
+    n_enemies:              9
 
   6v6_strike_heavy:
-    composition:       {Strike: 3, Vanguard: 2, Support: 1}
-    n_enemies:         6
+    composition:            {Strike: 3, Vanguard: 2, Support: 1}
+    enemy_composition:      {Strike: 4, Vanguard: 2, Support: 0}
+    n_enemies:              6
 
   6v6_support_heavy:
-    composition:       {Strike: 1, Vanguard: 2, Support: 3}
-    n_enemies:         6
+    composition:            {Strike: 1, Vanguard: 2, Support: 3}
+    enemy_composition:      {Strike: 4, Vanguard: 2, Support: 0}
+    n_enemies:              6
 
 env:
   map_name:          10gen_terran
   max_steps:         200
   obs_dim:           182    # pad-to-max (9v9 ceiling) — matches scaling_models.OBS_DIM
   action_dim:        6
-  team_reward_alpha: 0.2
+  team_reward_alpha: 0.35
 
 training:
   total_steps:            2000000
