@@ -72,6 +72,21 @@ def evaluate(env, policies, n_episodes, device):
     return wins / n_episodes
 
 
+def _truncate_log_after_step(log_path: str, step: int):
+    if not os.path.exists(log_path):
+        return
+    with open(log_path, newline='') as f:
+        rows = list(csv.reader(f))
+    if not rows:
+        return
+    header, data = rows[0], rows[1:]
+    kept = [r for r in data if r and int(float(r[0])) <= step]
+    with open(log_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(kept)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--config_name', type=str, required=True,
@@ -146,6 +161,7 @@ def main():
     if args.resume:
         step = trainer.load_checkpoint(args.resume)
         print(f'Resumed from {args.resume} at step {step}')
+        _truncate_log_after_step(log_path, step)
         csv_mode = 'a'
     else:
         step = 0

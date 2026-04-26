@@ -30,6 +30,7 @@ Enemy team mirrors ally composition by default for symmetric matchups.
 """
 import os
 import numpy as np
+import time
 
 os.environ.setdefault("SC2PATH", "C:/Program Files (x86)/StarCraft II")
 
@@ -120,6 +121,7 @@ ENEMY_DANGER_DIST    = 0.10
 DEFAULT_MAP_SIZE  = 32
 MAX_RESET_RETRIES = 30
 MAX_ALLY_SPREAD   = 0.30   # slightly looser for larger teams
+SC2_LAUNCH_LOCK   = os.path.join(os.path.dirname(__file__), '..', 'results_scaling', 'sc2_launch.lock')
 
 
 class ScalingSMACWrapper:
@@ -141,6 +143,7 @@ class ScalingSMACWrapper:
         if not _SMACV2_AVAILABLE:
             raise ImportError("SMACv2 not installed.")
 
+        self._cfg = dict(cfg)
         composition = cfg['composition']
         self.composition = {r: int(composition.get(r, 0)) for r in ROLE_NAMES}
         self.n_agents = sum(self.composition.values())
@@ -179,6 +182,7 @@ class ScalingSMACWrapper:
             obs_own_pos=True,
             fully_observable=False,
         )
+        self._install_launch_lock()
         self._start_pos_distribution = get_distribution(
             self._capability_config['start_positions']['dist_type']
         )({
@@ -196,6 +200,21 @@ class ScalingSMACWrapper:
         self._enemy_ids: list = []
         self._step_count = 0
         self._prev_agent_pos = np.zeros((self.n_agents, 2), dtype=np.float32)
+
+    def _install_launch_lock(self):
+        """
+        PySC2/SMACv2 writes TempLaunchMap.SC2Map in a shared StarCraft II temp
+        directory. Parallel workers can corrupt that file during SC2 relaunches,
+        so serialize the private _launch() call across processes.
+        """
+        raw_launch = self._env._launch
+
+        def locked_launch(*args, **kwargs):
+            os.makedirs(os.path.dirname(SC2_LAUNCH_LOCK), exist_ok=True)
+            with _FileLock(SC2_LAUNCH_LOCK):
+                return raw_launch(*args, **kwargs)
+
+        self._env._launch = locked_launch
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -245,10 +264,16 @@ class ScalingSMACWrapper:
     # ------------------------------------------------------------------
     def reset(self, seed=None, options=None):
         for _ in range(MAX_RESET_RETRIES):
-            self._env.reset(self._build_fixed_episode_config())
-            self._build_id_maps()
-            if self._ally_spread() <= MAX_ALLY_SPREAD:
-                break
+            try:
+                self._env.reset(self._build_fixed_episode_config())
+                self._build_id_maps()
+                if self._ally_spread() <= MAX_ALLY_SPREAD:
+                    break
+            except Exception as exc:
+                if not _is_transient_sc2_error(exc):
+                    raise
+                self._recover_after_sc2_error(exc)
+                continue
         self._step_count = 0
         self._prev_agent_pos = self._get_agent_positions()
         return self._build_obs_all(), {}
@@ -256,7 +281,20 @@ class ScalingSMACWrapper:
     def step(self, actions):
         self._step_count += 1
         smac_actions = self._translate_actions(actions)
-        reward_smac, terminated, info = self._env.step(smac_actions)
+        try:
+            reward_smac, terminated, info = self._env.step(smac_actions)
+        except Exception as exc:
+            if not _is_transient_sc2_error(exc):
+                raise
+            self._recover_after_sc2_error(exc)
+            obs = [np.zeros(OBS_DIM, dtype=np.float32) for _ in range(self.n_agents)]
+            rewards = np.full(self.n_agents, -0.1, dtype=np.float32)
+            return obs, rewards, True, False, {
+                'won': False,
+                'step': self._step_count,
+                'sc2_recovered': True,
+                'sc2_error': repr(exc),
+            }
         won  = bool(info.get('battle_won', False))
         done = terminated or self._step_count >= self.max_steps
 
@@ -272,6 +310,26 @@ class ScalingSMACWrapper:
 
     def close(self):
         self._env.close()
+
+    def _recover_after_sc2_error(self, exc: Exception):
+        print(f'[SMACv2 recovery] transient SC2 failure: {exc!r}', flush=True)
+        try:
+            self._env.close()
+        except Exception:
+            pass
+        time.sleep(2.0)
+        self._env = StarCraft2Env(
+            map_name=self.map_name,
+            capability_config=self._capability_config,
+            seed=self._cfg.get('seed', None),
+            debug=False,
+            conic_fov=False,
+            use_unit_ranges=True,
+            min_attack_range=2,
+            obs_own_pos=True,
+            fully_observable=False,
+        )
+        self._install_launch_lock()
 
     def __del__(self):
         try:
@@ -595,3 +653,55 @@ def _safe_ratio(v, m) -> float:
     if m is None or m == 0:
         return 0.0
     return float(v) / float(m)
+
+
+def _is_transient_sc2_error(exc: Exception) -> bool:
+    text = repr(exc)
+    transient_markers = (
+        'ConnectError',
+        'ProtocolError',
+        'RequestError',
+        'Failed to connect to the SC2 websocket',
+        'Status.ended',
+        'TempLaunchMap.SC2Map',
+        'InvalidMapData',
+        'Connection already closed',
+    )
+    return any(marker in text for marker in transient_markers)
+
+
+class _FileLock:
+    def __init__(self, path: str, poll_seconds: float = 0.25):
+        self.path = os.path.abspath(path)
+        self.poll_seconds = poll_seconds
+        self._fh = None
+
+    def __enter__(self):
+        self._fh = open(self.path, 'a+b')
+        if os.name == 'nt':
+            import msvcrt
+            while True:
+                try:
+                    self._fh.seek(0)
+                    msvcrt.locking(self._fh.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    time.sleep(self.poll_seconds)
+        else:
+            import fcntl
+            fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self._fh is None:
+            return False
+        if os.name == 'nt':
+            import msvcrt
+            self._fh.seek(0)
+            msvcrt.locking(self._fh.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
+        self._fh.close()
+        self._fh = None
+        return False
