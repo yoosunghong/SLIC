@@ -134,7 +134,7 @@ def main():
     for p in unique_policies:
         p.to(device)
 
-    critic = CentralizedCritic(n_agents=1, obs_dim=env_cfg['obs_dim']).to(device)
+    critic = CentralizedCritic(n_agents=env.n_agents, obs_dim=env_cfg['obs_dim']).to(device)
     trainer = MAPPOTrainer(policies, critic, train_cfg, device)
 
     total_steps   = train_cfg['total_steps']

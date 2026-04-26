@@ -56,6 +56,7 @@ class MAPPOTrainer:
 
     def _ppo_update(self, policy, policy_opt, critic, critic_opt, buf: AgentBuffer):
         obs = torch.tensor(np.array(buf.obs), dtype=torch.float32, device=self.device)
+        global_obs = torch.tensor(np.array(buf.global_obs), dtype=torch.float32, device=self.device)
         actions = torch.tensor(buf.actions, dtype=torch.long, device=self.device)
         old_log_probs = torch.tensor(buf.log_probs, dtype=torch.float32, device=self.device)
         advantages = torch.tensor(buf.advantages, dtype=torch.float32, device=self.device)
@@ -92,9 +93,8 @@ class MAPPOTrainer:
                 nn.utils.clip_grad_norm_(policy.parameters(), self.max_grad_norm)
                 policy_opt.step()
 
-                # Critic update (shared across all agents)
-                # We use agent obs as proxy (in full MAPPO, use global obs)
-                values_pred = critic(mb_obs).squeeze(-1)
+                mb_global_obs = global_obs[idx]
+                values_pred = critic(mb_global_obs).squeeze(-1)
                 value_loss = nn.functional.mse_loss(values_pred, mb_ret)
 
                 critic_opt.zero_grad()
@@ -129,6 +129,7 @@ def _merge_buffers(buffers: List[AgentBuffer]) -> AgentBuffer:
     merged = AgentBuffer()
     for buf in buffers:
         merged.obs.extend(buf.obs)
+        merged.global_obs.extend(buf.global_obs)
         merged.actions.extend(buf.actions)
         merged.log_probs.extend(buf.log_probs)
         merged.rewards.extend(buf.rewards)

@@ -8,6 +8,7 @@ from typing import List
 @dataclass
 class AgentBuffer:
     obs: List[np.ndarray] = field(default_factory=list)
+    global_obs: List[np.ndarray] = field(default_factory=list)
     actions: List[int] = field(default_factory=list)
     log_probs: List[float] = field(default_factory=list)
     rewards: List[float] = field(default_factory=list)
@@ -16,6 +17,7 @@ class AgentBuffer:
 
     def clear(self):
         self.obs.clear()
+        self.global_obs.clear()
         self.actions.clear()
         self.log_probs.clear()
         self.rewards.clear()
@@ -57,7 +59,8 @@ def collect_rollout(env, policies, critic, n_steps: int, device: torch.device,
     episode_reward_list = []
 
     for _ in range(n_steps):
-        global_obs = torch.tensor(obs[0], dtype=torch.float32, device=device).unsqueeze(0)
+        global_obs_np = np.asarray(obs, dtype=np.float32).reshape(-1)
+        global_obs = torch.tensor(global_obs_np, dtype=torch.float32, device=device).unsqueeze(0)
         value = critic(global_obs).item()
 
         actions = []
@@ -77,6 +80,7 @@ def collect_rollout(env, policies, critic, n_steps: int, device: torch.device,
 
         for i in range(n_agents):
             buffers[i].obs.append(obs[i].copy())
+            buffers[i].global_obs.append(global_obs_np.copy())
             buffers[i].actions.append(actions[i])
             buffers[i].log_probs.append(log_probs[i])
             buffers[i].rewards.append(float(rewards[i]))
@@ -93,7 +97,8 @@ def collect_rollout(env, policies, critic, n_steps: int, device: torch.device,
             done = False
 
     # Compute last value for bootstrap
-    global_obs = torch.tensor(obs[0], dtype=torch.float32, device=device).unsqueeze(0)
+    global_obs_np = np.asarray(obs, dtype=np.float32).reshape(-1)
+    global_obs = torch.tensor(global_obs_np, dtype=torch.float32, device=device).unsqueeze(0)
     with torch.no_grad():
         last_value = critic(global_obs).item()
 
