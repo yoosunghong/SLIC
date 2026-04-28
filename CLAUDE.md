@@ -1,5 +1,18 @@
 # Validation Project — Agent Brief
 
+## Active Plan Reference
+
+**Phase 2 후속 작업의 single source of truth는 [PLAN_V2.md](PLAN_V2.md)이다.** Reviewer 피드백 (#1 도메인 협소, #2 scaling 약함, #3 routing metric apples-to-apples 아님) 대응 항목 A / A' / C / D / E를 정의한다.
+
+운영 규칙:
+- 어떤 작업을 시작하기 전, `PLAN_V2.md`의 해당 항목을 먼저 확인한다.
+- 작업 완료 시 `PLAN_V2.md`의 체크박스를 갱신하고 결과 파일 경로를 기록한다.
+- 결과가 예상과 다르면 narrative를 조정하고 그 사실을 `PLAN_V2.md`에 기록한다.
+- GPU 학습이 필요한 항목은 사용자 승인을 받는다.
+- 기존 `PLAN.md`는 1차 운영 로그로 보존하되, Phase 2 후속 결정은 `PLAN_V2.md`를 우선한다.
+
+---
+
 ## Purpose
 
 This document is the complete specification for a new standalone Python project that validates the research claims in the paper:
