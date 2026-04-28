@@ -96,6 +96,8 @@ def main():
     ap.add_argument('--config_file', type=str, default='configs/scaling.yaml')
     ap.add_argument('--results_dir', type=str, default='results_scaling')
     ap.add_argument('--resume', type=str, default=None)
+    ap.add_argument('--vram_fraction', type=float, default=None,
+                    help='Override resources.vram_fraction from yaml (e.g. 0.14 for 6 parallel jobs)')
     args = ap.parse_args()
 
     assert ENV_OBS_DIM == MODEL_OBS_DIM, \
@@ -122,7 +124,8 @@ def main():
     torch.set_num_threads(n_threads)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
-        vram = float(res_cfg.get('vram_fraction', 1.0))
+        vram = args.vram_fraction if args.vram_fraction is not None \
+               else float(res_cfg.get('vram_fraction', 1.0))
         torch.cuda.set_per_process_memory_fraction(vram)
 
     tag = f'{args.config_name}_cond{args.condition}_seed{args.seed}'
