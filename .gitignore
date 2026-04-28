@@ -21,7 +21,6 @@ venv/
 !validation_poc/env/cooperative_grid.py
 
 # Results (large files)
-results/checkpoints/
 results/plots/
 results/*.png
 results/*.csv
