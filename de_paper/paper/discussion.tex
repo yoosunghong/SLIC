@@ -7,6 +7,8 @@ The cleanest supported statement is: when role labels are injected into both sel
 
 That statement is supported by three pieces of evidence. First, the role-routing matrix is much more structured in the attention model than in the MLP pseudo-routing baseline. Second, removing role labels from a shared attention policy causes a substantial performance drop. Third, the learned convention is not diffuse: the routing matrix is stably off-diagonal and role-specific.
 
+The scaling study adds a fourth, more qualified piece of evidence. Full attention clearly outperforms Role+MLP in 3v3, and it keeps a positive AUC and late-training advantage in 6v6 and 9v9. However, the gap narrows sharply as team size grows. This supports the claim that label-conditioned attention is a useful representational bias, while also showing that larger-team MAPPO optimization remains a separate bottleneck.
+
 \subsection{The Translation Gap}
 
 The more interesting scientific result is that our theory-informed behavioral prediction was not the convention selected by learning. We expected Vanguard to be most formation-sensitive; Support was. We expected Strike to route primarily to Support; Strike routed primarily to Vanguard.
@@ -21,7 +23,9 @@ The emergent convention is not random noise. In SMACv2, Strike routing to Vangua
 
 \subsection{Limitations}
 
-\paragraph{Environment scope.} The main evidence comes from one custom SMACv2 setup, with a simpler custom grid-world serving as a secondary structural replication. We still cannot claim the routing structure generalizes to other maps, team sizes, or factions without additional experiments.
+\paragraph{Environment scope.} The main evidence comes from one custom SMACv2 setup, with a simpler custom grid-world serving as a secondary structural replication. The new scaling runs cover 3v3, 6v6, and 9v9 team sizes, but they do not yet cover other maps or factions.
+
+\paragraph{Scaling instability.} The full attention model is strongest in 3v3. In 6v6 and 9v9, its AUC and late-training averages remain above the Role+MLP baseline, but the advantage is modest and seed variance is larger. We therefore do not claim that the architecture alone solves large-team coordination; it improves routing structure while leaving optimization stability as future work.
 
 \paragraph{Seed sensitivity.} The routing direction is reasonably stable, but magnitude varies across seeds.
 

@@ -15,6 +15,7 @@ Table~\ref{tab:track1} reports the final win rate for all five conditions.
 \centering
 \caption{Track 1 performance on SMACv2. Win rate is the mean of final evaluation checkpoints.}
 \label{tab:track1}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcc}
 \toprule
 Condition & Win Rate & Std \\
@@ -26,11 +27,12 @@ Cond~4: No Role Label (shared) & $0.474$ & $0.204$ \\
 Cond~5: Flat MLP & $0.494$ & $0.064$ \\
 \bottomrule
 \end{tabular}
+\par}
 \end{table}
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{../../smacv2_poc/results/plots/new/win_rate_curves.png}
+  \includegraphics[width=\linewidth]{figures/win_rate_curves.png}
   \caption{Learning curves for all five conditions over 2M training steps. The full attention condition converges highest, while removing intra-set self-attention or removing role labels lowers performance.}
   \label{fig:win_rate_curves}
 \end{figure}
@@ -38,6 +40,41 @@ Cond~5: Flat MLP & $0.494$ & $0.064$ \\
 Three observations matter for the paper's core claim. First, attention helps: Condition~1 outperforms Condition~3 by 21.2 percentage points (0.652 vs.\ 0.440). Second, intra-set context helps: Condition~2 trails Condition~1 by 10.1 points, indicating that contextualizing ally entities before routing adds value. Third, labels matter for attention: Condition~4 is 17.8 points below Condition~1, supporting the claim that explicit role labels are structurally useful in the attention architecture.
 
 Notably, Condition~5 slightly outperforms Condition~3 (0.494 vs.\ 0.440). This does not weaken the main thesis; it sharpens the narrower interpretation that adding role labels to an MLP is not enough to produce useful role-conditioned routing.
+
+\subsection{Scaling Study: 3v3, 6v6, and 9v9}
+\label{sec:scaling}
+
+We additionally evaluate whether the contrast between the full attention model and the Role+MLP baseline survives larger team sizes. We train balanced 3v3, 6v6, and 9v9 variants with the same role proportions: Strike, Vanguard, and Support appear in equal counts on the controlled team. The enemy composition scales in parallel while preserving the original asymmetric design: enemies contain Strike and Vanguard proxies but no Support unit. All scaling runs use the same MAPPO implementation, a true centralized critic over concatenated global observations, and identical hyperparameters within the scaling study.
+
+Table~\ref{tab:scaling} reports two less volatile metrics than a single final checkpoint: the mean win rate over the last ten evaluations, and the mean win rate across training as an AUC proxy. For 9v9 Condition~1, seed~2 was interrupted before completion and is excluded; seed~3 is used as the third completed seed.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Scaling results for Condition~1 (Full attention) and Condition~3 (Role+MLP). Values are mean $\pm$ std over three completed seeds.}
+\label{tab:scaling}
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Scale & C1 Last-10 & C3 Last-10 & C1 AUC & C3 AUC \\
+\midrule
+3v3 & $\mathbf{0.817 \pm 0.015}$ & $0.520 \pm 0.046$ & $\mathbf{0.682 \pm 0.018}$ & $0.361 \pm 0.018$ \\
+6v6 & $\mathbf{0.380 \pm 0.098}$ & $0.363 \pm 0.144$ & $\mathbf{0.379 \pm 0.064}$ & $0.311 \pm 0.098$ \\
+9v9 & $\mathbf{0.140 \pm 0.110}$ & $0.077 \pm 0.021$ & $\mathbf{0.159 \pm 0.055}$ & $0.095 \pm 0.066$ \\
+\bottomrule
+\end{tabular}
+\par}
+\end{table}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/scaling_performance.png}
+  \caption{Scaling study comparing the full attention model to the Role+MLP baseline. The attention advantage is strong in 3v3 and remains positive in AUC and late-training win rate for 6v6 and 9v9, but the gap narrows substantially as team size grows.}
+  \label{fig:scaling}
+\end{figure*}
+
+The scaling study strengthens but also narrows the paper's performance claim. In 3v3, Condition~1 is clearly better than Condition~3. In 6v6 and 9v9, the full model remains ahead on AUC and late-training averages, but the margin is small and variance increases. Thus, label-conditioned attention provides a useful representational bias, but it does not by itself solve the optimization instability introduced by larger teams. We therefore treat scaling as evidence for a structural advantage with an explicit limitation, not as a claim of robust large-team dominance.
 
 \subsection{Track 2: Role-to-Role Routing Analysis}
 

@@ -2,6 +2,8 @@
 
 ## Recent Ops
 
+- 2026-04-28: Updated the ICML/NExT paper with the completed scaling study. Generated `de_paper/paper/figures/scaling_performance.png` using the `paper` conda environment's matplotlib/seaborn stack; added a scaling subsection/table/figure to `experiments.tex`; revised `abstract.tex` and `discussion.tex` to frame the result as a strong 3v3 advantage plus narrower 6v6/9v9 AUC/late-training advantage with explicit large-team optimization instability. Installed `tectonic` into the `paper` conda env for PDF extraction, fixed figure paths to local `paper/figures/`, and rebuilt `de_paper/paper/main_icml.pdf` plus `main_icml_scaling_updated.pdf`.
+
 - 2026-04-24: Scaling-study infrastructure built after paper-deadline extension. Added `smacv2_poc/env/smac_wrapper_scaling.py` (variable n_agents/composition, pad-to-max obs_dim=182), `smacv2_poc/models/scaling_models.py` (ScalingFullModel + ScalingRoleMLPModel + build_scaling_policies with same-role weight sharing), `configs/scaling.yaml` (5 configs: 3v3_balanced, 6v6_balanced, 9v9_balanced, 6v6_strike_heavy, 6v6_support_heavy), `training/train_scaling.py`, `run_scaling_batch.sh`, `test_scaling_smoke.py`. Matrix: 5 configs × {C1 Full, C3 RoleMLP} × 3 seeds = 30 runs. Outputs go to `smacv2_poc/results_scaling/` (existing `results/` untouched). Python-level smoke passes; SC2-engine smoke blocked because D: drive was not mounted at test time — code is structurally correct, launch training once D: is accessible.
 - 2026-04-23 15:33 +09:00: Removed the empty affiliation block from the ICML draft, tightened the routing matrix table to fit the column, and reformatted the claim-summary bullets to stop label overflow before rebuilding the PDF.
 - 2026-04-23 15:20 +09:00: Updated the NExT submission markdown/TeX drafts to mention the custom grid-world as a secondary structural replication, created `de_paper/paper/paper_NExT_submission.md`, and prepared a fresh ICML PDF rebuild.
@@ -307,3 +309,36 @@ Per-seed routing matrices and 3-seed mean ± std:
 - abstract.tex: ~150 words, actual numbers, honest about revised predictions
 
 > **Note:** `prompts/prompt_F.md` was written with anticipated results that differ from actuals. Do NOT use the numbers in prompt_F. Use the actual results logged above in this section.
+
+---
+
+## Scaling MAPPO Fix (2026-04-26)
+
+### Completed
+
+| Task | Status |
+| :--- | :--- |
+| Stop active 6v6 scaling runs using the proxy critic | DONE |
+| Move current `smacv2_poc/results_scaling` logs/checkpoints into legacy directory | DONE: `smacv2_poc/results_scaling/legacy_proxy_critic_20260426_140052/` |
+| Update rollout buffers to store concatenated global observations | DONE |
+| Update PPO critic training to use global observations instead of per-agent observations | DONE |
+| Update MiniGrid and SMACv2 scaling train entry points to instantiate `CentralizedCritic(n_agents=env.n_agents, obs_dim=obs_dim)` | DONE |
+| Run syntax and small dummy rollout/update validation | DONE |
+| Add cross-process SC2 launch lock for parallel SMACv2 workers | DONE (2026-04-26): serializes `_launch()` to avoid `TempLaunchMap.SC2Map` corruption |
+| Add resume-log truncation for scaling runs | DONE (2026-04-26): removes CSV rows beyond checkpoint step before append |
+| Restart 6v6 Condition 1 seeds from latest checkpoints | DONE (2026-04-26): seed0 from 400384, seed1/seed2 from 200192 |
+
+### Rationale
+
+The previous scaling runs used a proxy critic (`n_agents=1`, with `obs[0]` or per-agent observations) rather than a true centralized MAPPO critic. Those outputs are now treated as legacy diagnostics and should not be mixed with the new paper-facing scaling results.
+
+### Stability Note
+
+Parallel SMACv2 workers can collide while creating StarCraft II's shared temporary launch map. The scaling wrapper now wraps the private SMACv2 `_launch()` call with a cross-process file lock at `smacv2_poc/results_scaling/sc2_launch.lock`. If future runs still hit SC2 launch instability, reduce parallelism to one worker per machine or run seeds sequentially from checkpoints.
+
+### Seed2 Status Check (2026-04-27)
+
+| Task | Status |
+| :--- | :--- |
+| Verify reported 6v6 Condition 1 seed2 training interruption | DONE: seed2 was already resumed from `step200192.pt` and is actively progressing |
+| Avoid duplicate seed2 restart while active process is writing logs/checkpoints | DONE: latest observed progress `661504/2000000`; latest checkpoint remains `step600576.pt` |
