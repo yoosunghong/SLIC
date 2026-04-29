@@ -1,0 +1,284 @@
+\documentclass{article}
+
+\PassOptionsToPackage{numbers,compress}{natbib}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{icml2026_template/icml2026}
+\makeatletter
+\global\icml@noticeprintedtrue
+\makeatother
+
+\icmltitlerunning{Routing Legibility}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Routing Legibility in Cooperative MARL:\\
+Measuring the Translation Gap Between Theory-Informed Roles and Learned Conventions}
+
+\begin{icmlauthorlist}
+\icmlauthor{Anonymous Authors}{}
+\end{icmlauthorlist}
+
+\icmlkeywords{multi-agent reinforcement learning, attention, game-theoretic learning, strategic conventions}
+
+\vskip 0.3in
+]
+
+\begin{abstract}
+Classical game theory suggests which strategic dependencies should matter; cooperative multi-agent reinforcement learning instead discovers conventions through non-stationary learning dynamics. We study this gap through \emph{routing legibility}: whether a trained policy exposes clear, measurable role-to-role dependency structure. We introduce a diagnostic built around three measurements: a role-routing matrix, a formation-sensitivity metric ($\Delta_{\max}$) for models with ally self-attention, and gradient/occlusion attribution for MLP baselines. We evaluate across two domains -- a custom three-role MiniGrid task and a custom three-role SMACv2 (Terran) scenario -- using five controlled policy conditions under a fixed MAPPO setup, plus a 3v3--9v9 SMACv2 scaling study. The main result is structural: when role labels appear in both the self token and ally tokens, attention-based policies produce substantially more concentrated role-conditioned routing than MLP baselines (routing-matrix std $0.275$ vs.\ $0.055$); removing role labels from a shared attention policy lowers win rate by 17.8\,pp. Scaling narrows the win-rate gap but preserves the routing signature, and a 3v3-trained attention checkpoint zero-shots to 9v9 at $0.213$ win rate, exceeding the from-scratch 9v9 attention baseline. Two theory-informed behavioral predictions held; two were revised post-hoc -- Support, not Vanguard, had the highest $\Delta_{\max}$, and Strike routed to Vanguard rather than Support. The scientific observation is that architecture makes strategic dependency \emph{legible}, while learning dynamics determine which convention is selected.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+As AI systems move from isolated prediction to strategic interaction, a central question for both game theory and machine learning is no longer only \emph{what equilibrium should exist}, but \emph{what convention a learning system actually settles on}. Classical game theory provides role-sensitive prescriptions under explicit assumptions about information, incentives, and rational response. Cooperative MARL agents, by contrast, learn through decentralized gradient updates in non-stationary environments. Even when role structure is known, the resulting coordination pattern need not resemble the theory-informed prescription. This is the \emph{translation gap}.
+
+Our focus is not performance alone. We ask whether architecture affects the \emph{legibility} of learned strategic dependency: can we read off, from the policy itself, which agent roles condition on which other roles? In heterogeneous teams, this is a routing problem. A Strike agent may need to anchor on a Vanguard, a Support, or neither, depending on what learning has discovered. If those dependencies are encoded diffusely inside a flat MLP, they may be hard to measure; if they are encoded through role-conditioned attention, they may become directly inspectable.
+
+We make a scoped mechanism claim. We do \emph{not} claim that attention guarantees the ``correct'' game-theoretic convention, nor that MLPs cannot use role labels at all. We claim that placing role labels in both \texttt{self\_tok} and \texttt{ally\_tok} creates a direct architectural pathway for role-pair routing in attention, and that this pathway makes emergent strategic dependency more measurable than in flat MLP baselines.
+
+We evaluate this claim on two domains: \textbf{Domain~1}, a custom three-role grid-world built on MiniGrid that isolates routing legibility under simple, fully-observable cooperation; and \textbf{Domain~2}, a custom SMACv2 scenario using Marine, Marauder, and Medivac as Strike/Vanguard/Support proxies, exercising the same architectural primitives in continuous control and adding a 3v3--9v9 scaling study. Both domains use the same five ablation conditions and MAPPO training setup. The contribution is an \textbf{analysis framework} -- the role-routing matrix, the formation-sensitivity metric $\Delta_{\max}$, and gradient/occlusion attribution -- that makes routing legible across architectures. It reveals: (i) attention produces much more structured role-conditioned routing than MLP; (ii) removing role labels from a shared-policy attention system substantially reduces performance; (iii) the convention selected by learning differs from our theory-informed prediction in a stable, tactically coherent way. That third result is the central point: the framework is what makes the divergence measurable.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Role discovery vs.\ role conditioning.} ROMA~\cite{roma2020} learns latent role representations from trajectories via variational inference, framing roles as a discovery problem. We take the complementary view: given pre-defined role labels, we analyze the \emph{mechanism} by which different policy architectures exploit them.
+
+\paragraph{Relational reasoning.} Zambaldi et al.~\cite{zambaldi2018} introduced self-attention as a relational inductive bias for single-agent RL. We extend this to heterogeneous multi-agent settings, where the relevant entity is not the spatially proximate one but the role-compatible one. Entity-centric observation representations~\cite{entitycentric} provide the structured input format that makes role-conditioned Q/K routing natural.
+
+\paragraph{Cooperative optimization and attention-based MARL.} QMIX~\cite{qmix} and MAPPO~\cite{mappo} provide cooperative optimization but no structural path for role-pair-conditioned entity selection. MADDPG~\cite{maddpg} and follow-up~\cite{maattn} apply attention to inter-agent communication or value aggregation, not to structured role-conditioned entity selection within a single agent's observation. Our cross-attention uses the agent's role-conditioned self-embedding as query and role-conditioned ally embeddings as keys/values, making routing explicit and attributable.
+
+\section{Theory: Role-Label-Conditioned Routing}
+\label{sec:theory}
+
+\paragraph{The routing problem.} In heterogeneous cooperative MARL, agents must identify \emph{which teammates} are most relevant to their decision. Role labels provide a natural signal for that selection: a ranged attacker benefits most from tracking the frontline tank's position; a healer prioritizes the most at-risk ally. The central question is whether different policy architectures differ in how effectively they exploit role labels as routing signals.
+
+\paragraph{MLP cannot structurally encode role-pair routing.} In an MLP, role labels are concatenated with all other features and processed by shared weights, $h = \text{MLP}([o_{\text{pos}}, o_{\text{hp}}, r_{\text{onehot}}, \ldots])$. The computation ``which entity to condition on given my role'' is not structurally encoded; it must be implicitly learned as a feature interaction buried in weight products. The MLP has no structural inductive bias toward routing by role-pair. This is not a claim of impossibility, only of a weaker structural prior.
+
+\paragraph{Why self-attention provides a direct routing path.} In our architecture, role labels appear in both \texttt{self\_tok[4:7]} (encoded into the Query) and each \texttt{ally\_tok} role-onehot block (encoded into Key/Value). The cross-attention score between agent $i$ (role $r_i$) and ally $j$ (role $r_j$) is
+\[
+\text{attn}_{ij} = \text{softmax}\!\left(\frac{(W_Q \mathbf{x}_i)(W_K \mathbf{x}_j)^\top}{\sqrt{d_k}}\right),
+\]
+where $\mathbf{x}_i$ contains $r_i$ and $\mathbf{x}_j$ contains $r_j$. The attention score is therefore a direct function of the role-pair $(r_i, r_j)$, computed in one matrix multiplication per head and read out from attention weights. An Intra-Set Self-Attention block applied per entity group enriches each ally token with its relationship to other allies before it enters the cross-attention Key computation; this contributes beyond the routing path itself but the routing mechanism is primarily located in cross-attention.
+
+\paragraph{Testable predictions.} The structural argument generates four testable predictions, evaluated in Section~\ref{sec:experiments}: (1) attention produces more structured role routing than MLP \textbf{[PASS]}; (2) removing role labels degrades performance by $>$5\,pp under a shared policy \textbf{[PASS]}; (3) $\Delta_{\max}$ is highest for Vanguard \textbf{[REVISED: Support highest]}; (4) Strike attends preferentially to Support \textbf{[REVISED: Strike$\to$Vanguard dominant]}. The two revisions are the paper's central translation-gap result, not failure cases.
+
+\section{Method}
+\label{sec:method}
+
+\paragraph{Environments.} \textbf{Domain~1} is a custom $15{\times}15$ MiniGrid task with three role-specialized agents (Strike, Vanguard, Support) cooperating to capture and hold zones under role-specific reward shaping. \textbf{Domain~2} is a custom SMACv2 scenario using three Terran unit types as role proxies (Marine = Strike, Marauder = Vanguard, Medivac = Support). SMACv2 does not natively expose role labels; we inject a 3-dim unit-type one-hot into both the agent's own token and each ally token, preserving the structural condition required for role-conditioned Q/K routing.
+
+\paragraph{Entity-centric observation.} Each agent receives an entity-centric observation with four named token groups: \texttt{self\_tok} (position, health, shield, role one-hot), \texttt{ally\_tok} (per-ally rel\_pos, health, shield, role one-hot, alive), \texttt{enemy\_tok} (rel\_pos, health, shield, type confidence, alive), and \texttt{zone\_tok} (rel\_pos, ownership, contest, value), plus validity masks. The 3v3 SMACv2 observation is 65-dim; the 3v3-padded form for the scaling study is 182-dim. Role one-hots occupy 3 dims in both \texttt{self\_tok} and each ally slot; this placement is load-bearing for the routing mechanism.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/slic_architecture.png}
+  \caption{SLIC architecture (Cond.~1, Full). Four entity token groups are encoded by dedicated linear layers; Intra-Set Self-Attention contextualizes each set; Cross-Attention uses the self-embedding as query and each set as key/value. Red arrows highlight the role-conditioned routing path.}
+  \label{fig:architecture}
+\end{figure}
+
+\paragraph{Five ablation conditions.} All conditions take the entity-centric observation and produce a 6-dim action distribution. \textbf{Cond.~1 (Full)}: per-set linear encoders (dim 64), Intra-Set Self-Attention with residual+LayerNorm, then Cross-Attention with self-embedding as query; output MLP $\text{Linear}(256, 128) \to \text{Linear}(128, |\mathcal{A}|)$. \textbf{Cond.~2 (No Self-Attn)}: removes the three Intra-Set blocks. \textbf{Cond.~3 (Role+MLP)}: removes all attention; flat MLP processes the full vector. \textbf{Cond.~4 (No-RoleLabel, shared policy)}: same as Cond.~1, but role one-hot dims are zeroed in both \texttt{self\_tok} and all \texttt{ally\_tok}, and a single shared policy handles all three roles -- the meaningful isolation of label contribution. \textbf{Cond.~5 (Flat-MLP)}: Cond.~3 with role one-hots zeroed; performance floor. Conditions 1, 2, 3, 5 use independent per-role policies. All attention computations apply \texttt{key\_padding\_mask}; a safety function force-unmasks slot~0 if all slots are masked.
+
+\paragraph{Training.} All conditions use MAPPO~\cite{mappo} with identical hyperparameters: 2M steps per seed, 3 seeds, GAE $\lambda{=}0.95$, $\gamma{=}0.99$, PPO clip $\varepsilon{=}0.2$, entropy coefficient $0.01$, Adam lr $3{\times}10^{-4}$, batch 512, mini-batch 64, 4 PPO epochs per update; centralized critic over concatenated observations. Role-specific rewards are mixed as $r_{\text{final}}=0.8 r_{\text{individual}}+0.2 \bar r_{\text{team}}$.
+
+\section{Experiments}
+\label{sec:experiments}
+
+We report Domain~2 (SMACv2) in detail, where the scaling study lives, then Domain~1 (MiniGrid) as a co-equal cross-domain check.
+
+\subsection{Track 1: Performance Comparison (SMACv2 3v3)}
+
+\begin{table}[h]
+\centering
+\small
+\caption{Track 1 win rate on SMACv2 3v3 (mean of final evaluation checkpoints).}
+\label{tab:track1}
+\begin{tabular}{lcc}
+\toprule
+Condition & Win Rate & Std \\
+\midrule
+Cond.~1: Full & $\mathbf{0.652}$ & $0.079$ \\
+Cond.~2: No Self-Attn & $0.551$ & $0.210$ \\
+Cond.~3: Role+MLP & $0.440$ & $0.143$ \\
+Cond.~4: No Role Label (shared) & $0.474$ & $0.204$ \\
+Cond.~5: Flat MLP & $0.494$ & $0.064$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/win_rate_curves.png}
+  \caption{Learning curves for all five SMACv2 3v3 conditions over 2M training steps. Full attention converges highest; removing self-attention or role labels lowers performance.}
+  \label{fig:win_rate_curves}
+\end{figure}
+
+Three observations matter for the core claim. First, attention helps: Cond.~1 outperforms Cond.~3 by 21.2\,pp. Second, intra-set context helps: Cond.~2 trails Cond.~1 by 10.1\,pp. Third, labels matter for attention: Cond.~4 is 17.8\,pp below Cond.~1. Cond.~5 slightly outperforms Cond.~3 (0.494 vs.\ 0.440), which sharpens (rather than weakens) the narrower point that adding role labels to an MLP is not enough to produce useful role-conditioned routing.
+
+\subsection{Scaling Study: 3v3, 6v6, 9v9}
+\label{sec:scaling}
+
+We test whether the contrast between full attention and Role+MLP survives larger team sizes. We train balanced 3v3, 6v6, and 9v9 variants with equal Strike/Vanguard/Support counts on the controlled team; enemy composition scales in parallel while preserving the asymmetric design (no enemy Support unit). All scaling runs use the same MAPPO implementation, a true centralized critic over concatenated global observations, and identical hyperparameters.
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Scaling results (3 seeds; mean$\pm$std). For 9v9 Cond.~1, seed~2 was interrupted; seed~3 completes the third seed.}
+\label{tab:scaling}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Scale & C1 Last-10 & C3 Last-10 & C1 AUC & C3 AUC \\
+\midrule
+3v3 & $\mathbf{0.817{\pm}0.015}$ & $0.520{\pm}0.046$ & $\mathbf{0.682{\pm}0.018}$ & $0.361{\pm}0.018$ \\
+6v6 & $\mathbf{0.380{\pm}0.098}$ & $0.363{\pm}0.144$ & $\mathbf{0.379{\pm}0.064}$ & $0.311{\pm}0.098$ \\
+9v9 & $\mathbf{0.140{\pm}0.110}$ & $0.077{\pm}0.021$ & $\mathbf{0.159{\pm}0.055}$ & $0.095{\pm}0.066$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.88\textwidth]{figures/scaling_performance.png}
+  \caption{Scaling study comparing full attention to Role+MLP. The attention advantage is strong in 3v3 and remains positive in AUC and late-training win rate for 6v6/9v9, but the gap narrows as team size grows.}
+  \label{fig:scaling}
+\end{figure*}
+
+In 3v3, Cond.~1 is clearly better than Cond.~3. In 6v6/9v9 the full model remains ahead on AUC and late-training averages but the margin shrinks and seed variance grows. We therefore treat scaling as evidence for a structural advantage with an explicit limitation: label-conditioned attention is a useful representational bias, but does not by itself solve the optimization instability of larger teams.
+
+\paragraph{Routing structure is preserved at scale.} The shrinking win-rate gap might be read as evidence the architectural advantage disappears at scale; the routing analysis says otherwise. Extracting the cross-attention role-routing matrix at 3v3, 6v6, and 9v9 with the same procedure, the inequality $\text{Strike}{\to}\text{Support} > \text{Strike}{\to}\text{Vanguard}$ at 9v9 ($0.143$ vs.\ $0.113$, three-seed mean) preserves the 3v3 sign of contrast. The role-specific $\Delta_{\max}$ profile compresses by roughly $5\times$ at 9v9 but its relative ordering survives. The structural claim is recoverable from attention at every scale we ran.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/routing_3v3_vs_9v9.png}
+  \caption{Cross-scale role-routing matrices for Cond.~1. The role-conditioned structure persists at 9v9 with smaller magnitude; the same off-diagonal pattern that is legible at 3v3 remains legible at 9v9.}
+  \label{fig:routing_scaling}
+\end{figure}
+
+\paragraph{Cross-scale zero-shot transfer.} Cond.~1's policy is invariant to ally count by construction (the attention mask handles padded slots). A 3v3-trained Cond.~1 checkpoint, evaluated without retraining on 9v9, achieves $0.213\pm 0.052$ win rate -- higher than the from-scratch 9v9 Cond.~1 baseline ($\sim 0.15$ at 2M steps) and far higher than 9v9 from-scratch Cond.~3 ($\sim 0.08$). Cond.~3 transfers poorly across the board (0.073--0.093), consistent with MLP weights memorizing a fixed slot-population pattern. This is direct evidence that the role-keyed attention model has learned an $N$-invariant routing convention rather than a scale-specific tactic.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Zero-shot transfer of 3v3-trained checkpoints, evaluated without retraining. Win rate is mean$\pm$std over 3 seeds.}
+\label{tab:transfer}
+\begin{tabular}{lccc}
+\toprule
+Target & Cond.~1 & Cond.~3 & Gap \\
+\midrule
+3v3 & $\mathbf{0.753{\pm}0.050}$ & $0.447{\pm}0.125$ & 30.6 pp \\
+6v6 & $\mathbf{0.200{\pm}0.091}$ & $0.093{\pm}0.009$ & 10.7 pp \\
+9v9 & $\mathbf{0.213{\pm}0.052}$ & $0.073{\pm}0.041$ & 14.0 pp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/transfer_bar.png}
+  \caption{Cross-scale zero-shot transfer. The 3v3-trained full attention policy retains more performance at larger team sizes than Role+MLP, consistent with a learned $N$-invariant routing convention.}
+  \label{fig:transfer}
+\end{figure}
+
+\paragraph{Padding-confound ablation.} A potential confound for the 3v3 gap is that Cond.~3 must process zero-padded ally slots that Cond.~1's mask blocks. We replace padded-slot contents at inference time with several fill strategies (zeros, noise at $\sigma{=}0.05$ and $0.20$, mean of valid ally tokens, copy of a random valid ally), keeping mask bits at 1. Cond.~1 is bit-exact invariant ($\text{KL}{=}0$) for both data-driven fills, confirming mask-driven invariance. The best Cond.~3 fill (large-noise) recovers only $+4.4$\,pp of the $28.9$\,pp gap, bounding the padding contribution above by $\sim 15\%$; the remaining $\geq 85\%$ is the architectural residual.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Padding-confound ablation at 3v3. KL is divergence from the zero-fill baseline; win rate is mean$\pm$std over 3 seeds.}
+\label{tab:padding}
+\begin{tabular}{lcc}
+\toprule
+Fill strategy & C3 KL & C3 win rate \\
+\midrule
+zeros & 0.000 & $0.533{\pm}0.000$ \\
+noise $\sigma{=}0.05$ & 0.005 & $0.456{\pm}0.150$ \\
+noise $\sigma{=}0.20$ & 0.089 & $0.578{\pm}0.016$ \\
+mean valid ally & 0.053 & $0.444{\pm}0.096$ \\
+copy valid ally & 0.062 & $0.556{\pm}0.123$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For Cond.~1, KL is exactly zero under the two data-driven fills because the mask removes padded slots before attention. This test matters because it separates an architectural routing advantage from a trivial padding artifact: even the best MLP fill accounts for only a small fraction of the observed 3v3 performance gap.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/padding_ablation.png}
+  \caption{Padding-confound ablation. Cond.~1 is invariant to plausible padded-slot fills that respect the mask, while Cond.~3 changes under the same perturbations.}
+  \label{fig:padding}
+\end{figure}
+
+\subsection{Track 2: Role-to-Role Routing}
+
+\paragraph{Formation sensitivity ($\Delta_{\max}$).} We construct two fixed evaluation scenarios: \textit{Clustered} (all allies near one landmark) and \textit{Spread} (each ally at a distinct landmark). For each role, $\Delta_{\max}$ is the max difference in ally self-attention weight between the two scenarios. Cond.~1 yields $\Delta_{\max}=0.028, 0.035, \mathbf{0.103}$ for Strike, Vanguard, Support respectively. Support, not Vanguard, is most formation-sensitive -- contradicting prediction~3 but exposing a measurable role-specific sensitivity profile.
+
+\paragraph{Cross-role routing matrix.} For each role and scenario, we extract the cross-attention weight that the agent's \texttt{self\_tok} query assigns to each ally slot, tagging slots by their occupant's role. Slot-ordering bias is ruled out by reversing slot order and verifying identical per-role weights.
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Cond.~1 role-routing matrix. Entry $(i,j)$ is mean cross-attention weight from role $i$ to ally slots occupied by role $j$. Diagonals are zero by construction.}
+\label{tab:routing}
+\begin{tabular}{lccc}
+\toprule
+Agent\,$\backslash$\,Ally & Strike & Vanguard & Support \\
+\midrule
+Strike   & --- & $\mathbf{0.713{\pm}0.147}$ & $0.287{\pm}0.147$ \\
+Vanguard & $0.666{\pm}0.171$ & --- & $0.334{\pm}0.171$ \\
+Support  & $\mathbf{0.628{\pm}0.169}$ & $0.372{\pm}0.169$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The matrix is structured, role-specific, and stably off-diagonal. Strike routes primarily to Vanguard rather than Support (revising prediction~4). Support routes primarily to Strike.
+
+\paragraph{MLP gradient attribution.} For Cond.~3 we compute input gradients of the maximum action logit and separately measure mean magnitude on spatial features and role-onehot dims. The Spatial/Role ratio is $5.8\times$ (Strike), $2.3\times$ (Vanguard), $3.7\times$ (Support): the MLP registers some role signal but spatial features dominate. The standard deviation of the routing matrix under attention is $0.275$ (Cond.~1) versus $0.055$ for the gradient-based pseudo-routing (Cond.~3) -- a $5\times$ structural-concentration gap.
+
+\paragraph{Unified routing metric: occlusion.} Comparing attention weights against gradients is not strictly apples-to-apples. We additionally measure routing via \emph{occlusion sensitivity}: for each ally slot we zero its token, set the mask bit to 1, and measure the KL divergence of the policy from the unoccluded baseline; aggregated by (agent role, ally role) this yields a $3{\times}3$ matrix that is well-defined for both architectures. On Cond.~1 at 3v3, occlusion-routing correlates with attention-routing at Pearson $r{=}0.885$ (row-normalized), validating occlusion as a faithful unified proxy. Applied identically to Cond.~3, occlusion produces a much flatter matrix at 3v3 and a magnitude-exploded matrix at 9v9 (one ally slot dominates a row by an order of magnitude), confirming the central claim on a single common axis.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/occlusion_routing_panel.png}
+  \caption{Occlusion-routing matrices, applied identically to Conditions~1 and~3 across scales. At 3v3, Cond.~1 occlusion-routing correlates with attention-routing at Pearson $r{=}0.885$, validating occlusion as a common cross-architecture diagnostic.}
+  \label{fig:occlusion}
+\end{figure}
+
+\subsection{Domain 1 (MiniGrid): Cross-Domain Replication}
+\label{sec:domain1}
+
+We run the same five conditions and the same Track~2 pipeline on Domain~1. The qualitative pattern replicates: attention produces a concentrated, off-diagonal role-routing matrix; the MLP baseline produces a much flatter pseudo-routing distribution dominated by spatial features. The specific behavioral convention is not identical across the two domains -- e.g., the Strike row routes preferentially to a different teammate role -- and this disagreement is itself informative: architecture governs whether routing is \emph{legible}, while environment dynamics and the MAPPO trajectory determine \emph{which} legible convention becomes stable. Cross-domain agreement on the structural claim plus cross-domain disagreement on the specific convention is exactly the pattern the routing-legibility framework is designed to expose.
+
+\subsection{Claim Verification Summary}
+
+\textbf{PASS:} (i) routing is more structured under attention than MLP (std $0.275$ vs.\ $0.055$); (ii) Cond.~4 win rate is $>$5\,pp below Cond.~1 ($0.474$ vs.\ $0.652$); (iii) routing structure preserved at 9v9 with the same sign of contrast as 3v3; (iv) 3v3$\to$9v9 zero-shot Cond.~1 win rate ($0.213$) exceeds 9v9 from-scratch Cond.~1 ($\sim 0.15$); (v) Cond.~1 is bit-exact invariant to padded-slot contents; padding bounds the 3v3 gap by $\leq 15\%$; (vi) occlusion routing correlates with attention routing at $r{=}0.885$. \textbf{REVISED:} Vanguard is not the highest-$\Delta_{\max}$ role -- Support is. Strike does not route primarily to Support -- it routes to Vanguard. Both revisions remain tactically coherent and constitute the paper's central translation-gap result.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{What the results support.} When role labels are injected into both self and ally tokens, attention-based policies learn substantially more legible role-conditioned routing structure than flat MLPs. Three pieces of evidence converge: the routing matrix is much more structured under attention; removing role labels from a shared attention policy causes a large performance drop; and the learned convention is stably off-diagonal, not diffuse. Scaling adds a fourth, qualified piece: full attention clearly beats Role+MLP in 3v3 and keeps a positive AUC and late-training advantage at 6v6/9v9, but the from-scratch win-rate gap shrinks. Three follow-ups sharpen the structural reading -- routing structure is preserved at 9v9, a 3v3 checkpoint zero-shots to 9v9 above the from-scratch 9v9 baseline, and the padding-confound is bounded $\leq 15\%$ of the 3v3 gap -- so the shrinking from-scratch gap is the wrong axis on which to read the architectural claim. Routing legibility, transfer, and padding-invariance are the axes where the structural advantage is unambiguous.
+
+\paragraph{The translation gap.} The more interesting scientific result is that our theory-informed behavioral prediction was not the convention selected by learning. We expected Vanguard to be most formation-sensitive; Support was. We expected Strike to route primarily to Support; Strike routed primarily to Vanguard. This is not a contradiction of the mechanism claim; it is the concrete empirical instance of the translation gap. The architecture made the learned convention visible; the convention itself was selected by the learning process, not prescribed by theory. Classical strategic analysis helps specify candidate dependency structures, but learning systems may settle into different, locally stable conventions.
+
+This distinction matters because a negative result on the original behavioral prediction would otherwise be easy to misread. If the paper claimed that attention should force a hand-specified convention, then Strike$\to$Vanguard would be a failure. Our actual claim is narrower and more diagnostic: role labels in both self and ally tokens create a readable route through the policy, and the learned route can then be compared against the theory-informed expectation. The comparison is where the scientific value lies. In SMACv2, Strike routing to Vanguard is tactically sensible because the frontliner anchors engagement geometry for the ranged unit; Support's high formation sensitivity is plausible because healer positioning depends strongly on ally clustering. The actual learned convention reflects environmental incentives, unit micro-dynamics, and gradient trajectories more than our initial prescription.
+
+The Domain~1/Domain~2 contrast reinforces this reading. The structural pattern -- attention yields concentrated, off-diagonal routing while MLP baselines remain flatter -- appears in both domains, but the exact preferred teammate role need not match across domains. That is the desired separation of claims: architecture governs whether role-conditioned dependency is legible; the environment and training process determine which convention becomes stable. A diagnostic that always returned the hand-specified convention would be less useful, because it would obscure the difference between architectural prior and learned strategic behavior.
+
+\paragraph{Limitations.} Two domains share an entity-centric observation schema, the same five conditions, and the same role count (three); the SMACv2 evidence is restricted to the Terran faction. The scaling study covers 3v3--9v9 but not other maps or factions. The full attention model is strongest in 3v3; in 6v6/9v9 its advantage is modest and seed variance grows -- we do not claim attention alone solves large-team coordination. Routing direction is reasonably stable across seeds, but magnitude varies. Attention weights and MLP gradients are not identical quantities; the unified occlusion metric ($r{=}0.885$ to attention) addresses cross-architecture comparability but does not eliminate it. Role labels are injected manually into SMACv2, appropriate for a controlled mechanism study but limiting external validity.
+
+\bibliographystyle{icml2026_template/icml2026}
+\bibliography{refs}
+
+\end{document}

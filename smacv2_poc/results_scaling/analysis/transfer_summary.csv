@@ -1,0 +1,7 @@
+condition,target,mean_win_rate,std_win_rate,n_seeds
+1,3v3_balanced,0.7533,0.0499,3
+1,6v6_balanced,0.2000,0.0909,3
+1,9v9_balanced,0.2133,0.0525,3
+3,3v3_balanced,0.4467,0.1247,3
+3,6v6_balanced,0.0933,0.0094,3
+3,9v9_balanced,0.0733,0.0411,3

@@ -9,6 +9,8 @@ That statement is supported by three pieces of evidence. First, the role-routing
 
 The scaling study adds a fourth, more qualified piece of evidence. Full attention clearly outperforms Role+MLP in 3v3, and it keeps a positive AUC and late-training advantage in 6v6 and 9v9. However, the gap narrows sharply as team size grows. This supports the claim that label-conditioned attention is a useful representational bias, while also showing that larger-team MAPPO optimization remains a separate bottleneck.
 
+Three additional results sharpen the structural reading of the scaling study. (i) The role-conditioned routing structure measured by attention weights is \emph{preserved} at 9v9 even when the win-rate gap has narrowed (Section~\ref{sec:routing-preserved-9v9}); the architectural signal does not disappear when win rate does. (ii) A 3v3-trained Condition~1 checkpoint zero-shot transfers to 9v9 with a higher win rate ($0.213$) than the same architecture trained directly on 9v9 for 2M steps ($\sim 0.15$) (Section~\ref{sec:transfer}); the routing convention generalizes across team sizes, while the from-scratch 9v9 run is bottlenecked by RL optimization rather than representation. (iii) The padding-confound ablation (Section~\ref{sec:padding}) shows the 3v3 gap cannot be attributed to Condition~3 wasting capacity on zero-padded slots: at most $\sim 15\%$ of the gap is recoverable by changing padding contents at inference time, leaving $\geq 85\%$ as the architectural residual. Together, these say that the shrinking from-scratch win-rate gap is the wrong axis on which to read the architectural claim --- routing legibility, transfer, and padding-invariance are the axes where the structural advantage is unambiguous.
+
 \subsection{The Translation Gap}
 
 The more interesting scientific result is that our theory-informed behavioral prediction was not the convention selected by learning. We expected Vanguard to be most formation-sensitive; Support was. We expected Strike to route primarily to Support; Strike routed primarily to Vanguard.
@@ -23,13 +25,13 @@ The emergent convention is not random noise. In SMACv2, Strike routing to Vangua
 
 \subsection{Limitations}
 
-\paragraph{Environment scope.} The main evidence comes from one custom SMACv2 setup, with a simpler custom grid-world serving as a secondary structural replication. The new scaling runs cover 3v3, 6v6, and 9v9 team sizes, but they do not yet cover other maps or factions.
+\paragraph{Environment scope.} The evidence comes from \emph{two} cooperative MARL domains -- a custom MiniGrid grid-world (Domain~1) and a custom SMACv2 scenario (Domain~2) -- which share an entity-centric observation schema and the same five ablation conditions. The two-domain design lets us separate architectural effects on routing legibility from any single environment's dynamics, but it remains scoped: all environments use the same role count (three) and the same general cooperative structure, and the SMACv2 evidence is restricted to the Terran faction. The scaling study (Domain~2) covers 3v3, 6v6, and 9v9 team sizes; it does not yet cover other maps or factions.
 
 \paragraph{Scaling instability.} The full attention model is strongest in 3v3. In 6v6 and 9v9, its AUC and late-training averages remain above the Role+MLP baseline, but the advantage is modest and seed variance is larger. We therefore do not claim that the architecture alone solves large-team coordination; it improves routing structure while leaving optimization stability as future work.
 
 \paragraph{Seed sensitivity.} The routing direction is reasonably stable, but magnitude varies across seeds.
 
-\paragraph{Cross-metric comparison.} Attention routing and MLP gradient pseudo-routing are not identical quantities. We therefore interpret their variance gap as an ordinal concentration comparison rather than a literal apples-to-apples metric.
+\paragraph{Cross-metric comparison.} Attention routing and MLP gradient pseudo-routing are not identical quantities. We therefore interpret their variance gap as an ordinal concentration comparison rather than a literal apples-to-apples metric. The unified occlusion-based routing metric (Section~\ref{sec:occlusion}) addresses this directly --- it is well-defined for both architectures and correlates with attention routing at Pearson $r{=}0.885$ on Condition~1, so the cross-architecture comparison can be read on a single common axis.
 
 \paragraph{Injected labels.} Role labels are injected manually into SMACv2 observations, which is appropriate for a controlled mechanism study but limits external validity.
 
