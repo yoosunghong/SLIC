@@ -111,8 +111,13 @@ def main() -> None:
                 color=colors[cond],
                 label=labels[cond],
             )
+            offset, va = (0.038, "bottom") if cond == 1 else (-0.038, "top")
             for xi, yi in zip(x, y):
-                ax.text(xi, yi + 0.035, f"{yi:.2f}", ha="center", va="bottom", fontsize=7, color=colors[cond])
+                ax.text(
+                    xi, yi + offset, f"{yi:.2f}",
+                    ha="center", va=va, fontsize=7, color=colors[cond],
+                    bbox=dict(boxstyle="round,pad=0.08", facecolor="white", alpha=0.75, edgecolor="none"),
+                )
 
         ax.set_title(title)
         ax.set_xticks(x, scales)

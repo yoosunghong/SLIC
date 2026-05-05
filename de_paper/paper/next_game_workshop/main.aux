@@ -1,0 +1,43 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\newlabel{sec:introduction}{{1}{1}{}{section.1}{}}
+\citation{roma2020}
+\citation{zambaldi2018}
+\citation{entitycentric}
+\citation{qmix}
+\citation{mappo}
+\citation{maddpg}
+\citation{maattn}
+\newlabel{sec:related}{{2}{2}{}{section.2}{}}
+\newlabel{sec:theory}{{3}{2}{}{section.3}{}}
+\newlabel{sec:method}{{4}{2}{}{section.4}{}}
+\citation{mappo}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{3}{SLIC architecture (Cond.~1, Full). Four entity token groups are encoded by dedicated linear layers; Intra-Set Self-Attention contextualizes each set; Cross-Attention uses the self-embedding as query and each set as key/value. Red arrows highlight the role-conditioned routing path}{figure.caption.1}{}}
+\newlabel{sec:experiments}{{5}{3}{}{section.5}{}}
+\newlabel{fig:win_rate_curves}{{2}{3}{Learning curves for all five SMACv2 3v3 conditions over 2M training steps. Full attention converges highest; removing self-attention or role labels lowers performance}{figure.caption.3}{}}
+\newlabel{tab:track1}{{1}{3}{Track 1 win rate on SMACv2 3v3 (mean of final evaluation checkpoints)}{table.caption.2}{}}
+\newlabel{sec:scaling}{{5.2}{3}{}{subsection.5.2}{}}
+\newlabel{fig:scaling}{{3}{4}{Scaling study comparing full attention to Role+MLP. The attention advantage is strong in 3v3 and remains positive in AUC and late-training win rate for 6v6/9v9, but the gap narrows as team size grows}{figure.caption.5}{}}
+\newlabel{tab:scaling}{{2}{4}{Scaling results (3 seeds; mean$\pm $std). For 9v9 Cond.~1, seed~2 was interrupted; seed~3 completes the third seed}{table.caption.4}{}}
+\newlabel{fig:routing_scaling}{{4}{4}{Cross-scale role-routing matrices for Cond.~1. The role-conditioned structure persists at 9v9 with smaller magnitude; the same off-diagonal pattern that is legible at 3v3 remains legible at 9v9}{figure.caption.6}{}}
+\newlabel{tab:transfer}{{3}{4}{Zero-shot transfer of 3v3-trained checkpoints, evaluated without retraining. Win rate is mean$\pm $std over 3 seeds}{table.caption.7}{}}
+\newlabel{fig:transfer}{{5}{4}{Cross-scale zero-shot transfer. The 3v3-trained full attention policy retains more performance at larger team sizes than Role+MLP, consistent with a learned $N$-invariant routing convention}{figure.caption.8}{}}
+\newlabel{tab:padding}{{4}{5}{Padding-confound ablation at 3v3. KL is divergence from the zero-fill baseline; win rate is mean$\pm $std over 3 seeds}{table.caption.9}{}}
+\newlabel{fig:padding}{{6}{5}{Padding-confound ablation. Cond.~1 is invariant to plausible padded-slot fills that respect the mask, while Cond.~3 changes under the same perturbations}{figure.caption.10}{}}
+\newlabel{tab:routing}{{5}{5}{Cond.~1 role-routing matrix. Entry $(i,j)$ is mean cross-attention weight from role $i$ to ally slots occupied by role $j$. Diagonals are zero by construction}{table.caption.11}{}}
+\newlabel{sec:domain1}{{5.4}{5}{}{subsection.5.4}{}}
+\newlabel{fig:occlusion}{{7}{6}{Occlusion-routing matrices, applied identically to Conditions~1 and~3 across scales. At 3v3, Cond.~1 occlusion-routing correlates with attention-routing at Pearson $r{=}0.885$, validating occlusion as a common cross-architecture diagnostic}{figure.caption.12}{}}
+\newlabel{sec:discussion}{{6}{6}{}{section.6}{}}
+\bibstyle{icml2026_template/icml2026}
+\bibdata{refs}
+\bibcite{entitycentric}{{1}{2020}{{Christianos et~al.}}{{Christianos, Sch{\"a}fer, and Albrecht}}}
+\bibcite{maattn}{{2}{2019}{{Iqbal \& Sha}}{{Iqbal and Sha}}}
+\bibcite{maddpg}{{3}{2017}{{Lowe et~al.}}{{Lowe, Wu, Tamar, Harb, Abbeel, and Mordatch}}}
+\bibcite{qmix}{{4}{2018}{{Rashid et~al.}}{{Rashid, Samvelyan, de~Witt, Farquhar, Foerster, and Whiteson}}}
+\bibcite{roma2020}{{5}{2020}{{Wang et~al.}}{{Wang, Dong, Lesser, and Zhang}}}
+\bibcite{mappo}{{6}{2022}{{Yu et~al.}}{{Yu, Velu, Vinitsky, Wang, Bayen, and Wu}}}
+\bibcite{zambaldi2018}{{7}{2018}{{Zambaldi et~al.}}{{Zambaldi, Raposo, Santoro, Bapst, Li, Babuschkin, Tuyls, Reichert, Lillicrap, Lockhart, Shanahan, Langston, Pascanu, Botvinick, Vinyals, and Battaglia}}}
+\gdef \@abspage@last{7}
