@@ -15,6 +15,7 @@
 #   SEEDS              space-separated list of seeds (default: "0 1 2")
 #   PYTHON             python interpreter (default: anaconda paper env)
 #   PARALLEL_PER_COND  launch seeds concurrently inside each condition (default: 1=yes)
+#   EXTRA_ARGS         extra args forwarded to training/train_scaling.py
 
 set -u
 
@@ -23,6 +24,7 @@ CONDITIONS="${CONDITIONS:-1 3}"
 SEEDS="${SEEDS:-0 1 2}"
 PYTHON="${PYTHON:-/c/Users/PC/anaconda3/envs/paper/python.exe}"
 PARALLEL_PER_COND="${PARALLEL_PER_COND:-1}"
+EXTRA_ARGS="${EXTRA_ARGS:-}"
 
 cd "$(dirname "$0")"
 mkdir -p results_scaling/logs
@@ -38,6 +40,7 @@ for cond in $CONDITIONS; do
         echo "  -> $tag  (log: $log)"
         "$PYTHON" -u training/train_scaling.py \
             --config_name "$BATCH" --condition "$cond" --seed "$seed" \
+            $EXTRA_ARGS \
             > "$log" 2>&1 &
         pids+=($!)
         if [ "$PARALLEL_PER_COND" -ne 1 ]; then

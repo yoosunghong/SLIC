@@ -137,6 +137,65 @@ class ScalingFullModel(BasePolicy):
         return logits, aw
 
 
+class ScalingNoSelfAttnModel(BasePolicy):
+    """Condition 2: Encoders + Cross-Attn, no intra-set self-attention."""
+
+    def __init__(self, obs_dim: int = OBS_DIM, action_dim: int = 6,
+                 embed_dim: int = 64, num_heads: int = 2):
+        super().__init__(obs_dim, action_dim)
+        assert obs_dim == OBS_DIM, f"ScalingNoSelfAttnModel expects obs_dim={OBS_DIM}"
+
+        self.self_enc  = nn.Linear(SELF_DIM,  embed_dim)
+        self.ally_enc  = nn.Linear(ALLY_DIM,  embed_dim)
+        self.enemy_enc = nn.Linear(ENEMY_DIM, embed_dim)
+        self.zone_enc  = nn.Linear(ZONE_DIM,  embed_dim)
+
+        self.ally_cross_attn  = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
+        self.enemy_cross_attn = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
+        self.zone_cross_attn  = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
+
+        self.fc1 = nn.Linear(embed_dim * 4, 128)
+        self.fc2 = nn.Linear(128, action_dim)
+        self.relu = nn.ReLU()
+
+    def forward(self, obs: torch.Tensor, return_attn: bool = False):
+        if obs.dim() == 1:
+            obs = obs.unsqueeze(0)
+
+        self_tok, ally_tok, enemy_tok, zone_tok, ally_m, enemy_m, zone_m = parse_obs_scaling(obs)
+        ally_m  = _safe_mask(ally_m)
+        enemy_m = _safe_mask(enemy_m)
+        zone_m  = _safe_mask(zone_m)
+
+        self_emb  = self.relu(self.self_enc(self_tok))
+        ally_emb  = self.relu(self.ally_enc(ally_tok))
+        enemy_emb = self.relu(self.enemy_enc(enemy_tok))
+        zone_emb  = self.relu(self.zone_enc(zone_tok))
+
+        q = self_emb.unsqueeze(1)
+        ally_ctx,  ally_ca_w  = self.ally_cross_attn(q, ally_emb,  ally_emb,  key_padding_mask=ally_m,  need_weights=True, average_attn_weights=True)
+        enemy_ctx, enemy_ca_w = self.enemy_cross_attn(q, enemy_emb, enemy_emb, key_padding_mask=enemy_m, need_weights=True, average_attn_weights=True)
+        zone_ctx,  zone_ca_w  = self.zone_cross_attn(q, zone_emb,  zone_emb,  key_padding_mask=zone_m,  need_weights=True, average_attn_weights=True)
+
+        x = torch.cat([
+            self_emb,
+            ally_ctx.squeeze(1),
+            enemy_ctx.squeeze(1),
+            zone_ctx.squeeze(1),
+        ], dim=-1)
+        x = self.relu(self.fc1(x))
+        logits = self.fc2(x)
+
+        aw = None
+        if return_attn:
+            aw = {
+                'ally_cross_attn':  ally_ca_w.detach(),
+                'enemy_cross_attn': enemy_ca_w.detach(),
+                'zone_cross_attn':  zone_ca_w.detach(),
+            }
+        return logits, aw
+
+
 class ScalingRoleMLPModel(BasePolicy):
     """Condition 3: Pure MLP with role label present in flat obs."""
 
@@ -154,6 +213,49 @@ class ScalingRoleMLPModel(BasePolicy):
         return self.net(obs), None
 
 
+def zero_role_labels_scaling(obs: torch.Tensor) -> torch.Tensor:
+    obs = obs.clone()
+    obs[:, 5:8] = 0.0
+    ally_start = _SELF_END
+    for slot in range(N_ALLY_SLOTS):
+        base = ally_start + slot * ALLY_DIM
+        obs[:, base + 4:base + 7] = 0.0
+    return obs
+
+
+class ScalingNoRoleLabelModel(BasePolicy):
+    """Condition 4: shared FullModel-style policy with role labels zeroed."""
+
+    def __init__(self, obs_dim: int = OBS_DIM, action_dim: int = 6,
+                 embed_dim: int = 64, num_heads: int = 2):
+        super().__init__(obs_dim, action_dim)
+        self._inner = ScalingFullModel(obs_dim, action_dim, embed_dim, num_heads)
+
+    def forward(self, obs: torch.Tensor, return_attn: bool = False):
+        if obs.dim() == 1:
+            obs = obs.unsqueeze(0)
+        obs = zero_role_labels_scaling(obs)
+        return self._inner(obs, return_attn=return_attn)
+
+
+class ScalingFlatMLPModel(BasePolicy):
+    """Condition 5: Pure MLP with role labels zeroed."""
+
+    def __init__(self, obs_dim: int = OBS_DIM, action_dim: int = 6, **kwargs):
+        super().__init__(obs_dim, action_dim)
+        self.net = nn.Sequential(
+            nn.Linear(obs_dim, 256), nn.ReLU(),
+            nn.Linear(256, 128),     nn.ReLU(),
+            nn.Linear(128, action_dim),
+        )
+
+    def forward(self, obs: torch.Tensor, return_attn: bool = False):
+        if obs.dim() == 1:
+            obs = obs.unsqueeze(0)
+        obs = zero_role_labels_scaling(obs)
+        return self.net(obs), None
+
+
 def build_scaling_policies(condition: int, agent_roles: list,
                            action_dim: int = 6, embed_dim: int = 64, num_heads: int = 2):
     """
@@ -167,8 +269,15 @@ def build_scaling_policies(condition: int, agent_roles: list,
                   embed_dim=embed_dim, num_heads=num_heads)
     if condition == 1:
         role_policies = [ScalingFullModel(**kwargs) for _ in range(3)]
+    elif condition == 2:
+        role_policies = [ScalingNoSelfAttnModel(**kwargs) for _ in range(3)]
     elif condition == 3:
         role_policies = [ScalingRoleMLPModel(obs_dim=OBS_DIM, action_dim=action_dim) for _ in range(3)]
+    elif condition == 4:
+        shared = ScalingNoRoleLabelModel(**kwargs)
+        return [shared for _ in agent_roles]
+    elif condition == 5:
+        role_policies = [ScalingFlatMLPModel(obs_dim=OBS_DIM, action_dim=action_dim) for _ in range(3)]
     else:
-        raise ValueError(f"Scaling study only supports conditions 1 and 3, got {condition}")
+        raise ValueError(f"Scaling study only supports conditions 1-5, got {condition}")
     return [role_policies[r] for r in agent_roles]

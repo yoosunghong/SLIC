@@ -32,7 +32,27 @@ import os
 import numpy as np
 import time
 
-os.environ.setdefault("SC2PATH", "C:/Program Files (x86)/StarCraft II")
+
+def _configure_sc2_path() -> None:
+    """Set SC2PATH only when it is unset and a local install can be found."""
+    if os.environ.get("SC2PATH"):
+        return
+
+    candidates = [
+        r"C:\Program Files (x86)\StarCraft II",
+        r"C:\Program Files\StarCraft II",
+        r"C:\StarCraft II",
+        r"D:\StarCraft II",
+        os.path.expanduser(r"~\StarCraft II"),
+        os.path.expanduser("~/StarCraftII"),
+    ]
+    for candidate in candidates:
+        if os.path.isdir(os.path.join(candidate, "Versions")):
+            os.environ["SC2PATH"] = candidate
+            return
+
+
+_configure_sc2_path()
 
 try:
     from smacv2.env import StarCraft2Env

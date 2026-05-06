@@ -1,14 +1,15 @@
 """
 Scaling-study training entry point.
 
-Trains Condition 1 (Full) or Condition 3 (Role+MLP) on any of the scaling
-configs defined in configs/scaling.yaml.
+Trains Conditions 1-5 on any of the scaling configs defined in
+configs/scaling.yaml.
 
 Outputs go to smacv2_poc/results_scaling/ — existing results/ is untouched.
 
 Usage:
   python train_scaling.py --config_name 3v3_balanced --condition 1 --seed 0
   python train_scaling.py --config_name 6v6_support_heavy --condition 3 --seed 2
+  python train_scaling.py --config_name 3v3_balanced --condition 5 --seed 0
 """
 import argparse
 import csv
@@ -91,7 +92,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--config_name', type=str, required=True,
                     help='Key from configs/scaling.yaml:configs (e.g. 3v3_balanced)')
-    ap.add_argument('--condition', type=int, required=True, choices=[1, 3])
+    ap.add_argument('--condition', type=int, required=True, choices=[1, 2, 3, 4, 5])
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--config_file', type=str, default='configs/scaling.yaml')
     ap.add_argument('--results_dir', type=str, default='results_scaling')

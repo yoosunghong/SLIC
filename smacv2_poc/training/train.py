@@ -123,7 +123,7 @@ def main():
         p.to(device)
 
     critic_obs_dim = env_cfg['obs_dim'] if args.condition != 6 else raw_obs_dim
-    critic = CentralizedCritic(n_agents=1, obs_dim=critic_obs_dim).to(device)
+    critic = CentralizedCritic(n_agents=env.n_agents, obs_dim=critic_obs_dim).to(device)
 
     trainer = MAPPOTrainer(policies, critic, train_cfg, device)
 
