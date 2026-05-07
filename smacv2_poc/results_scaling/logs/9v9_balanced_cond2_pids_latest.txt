@@ -1,0 +1,5 @@
+367 9v9_balanced_cond2_seed0 stdout=results_scaling/logs/9v9_balanced_cond2_seed0.stdout.log stderr=results_scaling/logs/9v9_balanced_cond2_seed0.stderr.log
+378 9v9_balanced_cond2_seed1 stdout=results_scaling/logs/9v9_balanced_cond2_seed1.stdout.log stderr=results_scaling/logs/9v9_balanced_cond2_seed1.stderr.log
+381 9v9_balanced_cond2_seed2 stdout=results_scaling/logs/9v9_balanced_cond2_seed2.stdout.log stderr=results_scaling/logs/9v9_balanced_cond2_seed2.stderr.log
+777 9v9_balanced_cond2_seed2 stdout=results_scaling/logs/9v9_balanced_cond2_seed2.stdout.log stderr=results_scaling/logs/9v9_balanced_cond2_seed2.stderr.log
+1076 9v9_balanced_cond2_seed2 direct_python stdout=results_scaling/logs/9v9_balanced_cond2_seed2.stdout.log stderr=results_scaling/logs/9v9_balanced_cond2_seed2.stderr.log
