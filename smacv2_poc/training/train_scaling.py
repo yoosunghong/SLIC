@@ -96,6 +96,8 @@ def main():
     ap.add_argument('--config_file', type=str, default='configs/scaling.yaml')
     ap.add_argument('--results_dir', type=str, default='results_scaling')
     ap.add_argument('--resume', type=str, default=None)
+    ap.add_argument('--disable_early_stop', action='store_true',
+                    help='Ignore early_stop_threshold/patience and train until total_steps.')
     ap.add_argument('--vram_fraction', type=float, default=None,
                     help='Override resources.vram_fraction from yaml (e.g. 0.14 for 6 parallel jobs)')
     args = ap.parse_args()
@@ -206,7 +208,7 @@ def main():
                 csv.writer(f).writerow([step, wr, mean_r, ent])
             pbar.set_postfix({'wr': f'{wr:.2f}', 'ent': f'{ent:.3f}'})
 
-            if wr >= es_thresh:
+            if not args.disable_early_stop and wr >= es_thresh:
                 above_cnt += 1
                 if above_cnt >= es_pat:
                     pbar.close()

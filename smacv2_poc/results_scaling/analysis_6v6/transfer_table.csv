@@ -1,0 +1,11 @@
+source,target,condition,seed,n_episodes,win_rate,mean_len,mean_reward,ckpt
+3v3_balanced,6v6_balanced,1,0,50,0.16,50.0,1.9365034846377238,step2000384.pt
+3v3_balanced,6v6_balanced,1,1,50,0.22,49.82,2.0334686295191933,step2000384.pt
+3v3_balanced,6v6_balanced,1,2,50,0.18,43.2,1.8054410190442285,step2000384.pt
+3v3_balanced,6v6_balanced,1,3,50,0.28,45.84,3.9446950209885836,step2000384.pt
+3v3_balanced,6v6_balanced,1,4,50,0.22,45.08,2.348600036060807,step2000384.pt
+3v3_balanced,6v6_balanced,3,0,50,0.12,49.22,1.147932751604967,step2000384.pt
+3v3_balanced,6v6_balanced,3,1,50,0.12,50.6,1.37808467417286,step2000384.pt
+3v3_balanced,6v6_balanced,3,2,50,0.06,49.46,1.1558174903984764,step2000384.pt
+3v3_balanced,6v6_balanced,3,3,50,0.06,47.62,2.3223410696719657,step2000384.pt
+3v3_balanced,6v6_balanced,3,4,50,0.06,49.82,2.2347095437848474,step2000384.pt
