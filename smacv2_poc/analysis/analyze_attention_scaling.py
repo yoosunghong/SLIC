@@ -54,11 +54,14 @@ def _find_checkpoint(ckpt_dir: Path, step: int = None) -> Path:
     if not ckpt_dir.exists():
         return None
     def _step_num(p):
+        # Handle both 'step1234.pt' and 'cond2_seed0_step1234.pt'.
+        m = p.stem.split('step')[-1]
         try:
-            return int(p.stem.replace('step', ''))
+            return int(m)
         except ValueError:
             return -1
-    ckpts = sorted(ckpt_dir.glob('step*.pt'), key=_step_num)
+    ckpts = sorted(list(ckpt_dir.glob('step*.pt')) + list(ckpt_dir.glob('*_step*.pt')),
+                   key=_step_num)
     if not ckpts:
         return None
     if step is None:
@@ -69,8 +72,9 @@ def _find_checkpoint(ckpt_dir: Path, step: int = None) -> Path:
     return ckpts[-1]
 
 
-def load_cond1_policies(ckpt_path: Path, agent_roles: list, device: torch.device):
-    policies = build_scaling_policies(condition=1, agent_roles=agent_roles)
+def load_cond1_policies(ckpt_path: Path, agent_roles: list, device: torch.device,
+                        condition: int = 1):
+    policies = build_scaling_policies(condition=condition, agent_roles=agent_roles)
     unique = list({id(p): p for p in policies}.values())
     for p in unique:
         p.to(device)
@@ -135,20 +139,20 @@ def compute_delta_max(unique_policies, clustered_obs, spread_obs,
 
 def analyze_run(config_name: str, seed: int, step: int,
                 config_file: Path, ckpt_root: Path,
-                device: torch.device) -> dict:
+                device: torch.device, condition: int = 1) -> dict:
     cfg = _load_config(config_name, config_file)
     composition = cfg['composition']
     n_enemies = cfg.get('n_enemies', sum(composition.values()))
     agent_roles = composition_to_roles(composition)
 
-    ckpt_dir = ckpt_root / f'{config_name}_cond1_seed{seed}'
+    ckpt_dir = ckpt_root / f'{config_name}_cond{condition}_seed{seed}'
     ckpt_path = _find_checkpoint(ckpt_dir, step)
     if ckpt_path is None:
         print(f'  [skip] no checkpoint at {ckpt_dir}')
         return None
     print(f'  loading {ckpt_path.name}')
 
-    policies, unique = load_cond1_policies(ckpt_path, agent_roles, device)
+    policies, unique = load_cond1_policies(ckpt_path, agent_roles, device, condition=condition)
 
     clustered = build_scenario_obs_scaling('clustered', composition, n_enemies)
     spread    = build_scenario_obs_scaling('spread',    composition, n_enemies)
@@ -249,6 +253,10 @@ def main():
                     default=str(_ROOT / 'results_scaling' / 'checkpoints'))
     ap.add_argument('--out_dir', type=str,
                     default=str(_ROOT / 'results_scaling' / 'analysis'))
+    ap.add_argument('--condition', type=int, default=1,
+                    help='Condition number (1, 2, ...). Default 1.')
+    ap.add_argument('--out_tag', type=str, default=None,
+                    help='Tag added to output filenames (default: cond{N} if condition!=1)')
     args = ap.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -269,16 +277,18 @@ def main():
             k, v = part.split('=', 1)
             seed_map[k.strip()] = [int(s) for s in v.split(',') if s.strip()]
 
+    tag = args.out_tag if args.out_tag is not None else (f'_cond{args.condition}' if args.condition != 1 else '')
     for cfg_name in args.configs:
-        print(f'\n=== {cfg_name} ===')
+        print(f'\n=== {cfg_name} (cond{args.condition}) ===')
         per_seed = []
         seeds = seed_map.get(cfg_name, args.seeds)
         for seed in seeds:
-            res = analyze_run(cfg_name, seed, args.step, config_file, ckpt_root, device)
+            res = analyze_run(cfg_name, seed, args.step, config_file, ckpt_root, device,
+                              condition=args.condition)
             if res is None:
                 continue
             per_seed.append(res)
-            np.save(out_dir / f'routing_{cfg_name}_seed{seed}.npy',
+            np.save(out_dir / f'routing_{cfg_name}{tag}_seed{seed}.npy',
                     res['routing_mean'])
             row = [cfg_name, seed, res['ckpt']]
             row += [f'{v:.4f}' for v in res['routing_mean'].flatten()]
@@ -304,14 +314,15 @@ def main():
         print(f'  Strike→Support ({ss:.3f}) {">" if ok else "<="} Strike→Vanguard ({sv:.3f})  '
               f'[{"PASS" if ok else "FAIL"}]')
 
-    if aggregated:
+    if aggregated and args.condition == 1:
         plot_comparison(aggregated, out_dir / 'routing_3v3_vs_9v9.png',
                         title='Cross-attn role routing (Cond1)')
         plot_delta_bar(aggregated, out_dir / 'delta_max_3v3_vs_9v9.png')
 
-    with open(out_dir / 'routing_summary.csv', 'w', newline='') as f:
+    summary_path = out_dir / f'routing_summary{tag}.csv'
+    with open(summary_path, 'w', newline='') as f:
         csv.writer(f).writerows(csv_rows)
-    print(f'\nWrote: {out_dir}/routing_summary.csv, routing_3v3_vs_9v9.png, delta_max_3v3_vs_9v9.png')
+    print(f'\nWrote: {summary_path}')
 
 
 if __name__ == '__main__':

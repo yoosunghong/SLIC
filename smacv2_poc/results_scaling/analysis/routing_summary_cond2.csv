@@ -1,0 +1,6 @@
+config,seed,ckpt,route_Strike_Strike,route_Strike_Vanguard,route_Strike_Support,route_Vanguard_Strike,route_Vanguard_Vanguard,route_Vanguard_Support,route_Support_Strike,route_Support_Vanguard,route_Support_Support,delta_strike,delta_vanguard,delta_support
+3v3_balanced,0,cond2_seed0_step2000384.pt,0.0000,0.8899,0.1101,0.6447,0.0000,0.3553,0.8008,0.1992,0.0000,0.0000,0.0000,0.0000
+3v3_balanced,1,cond2_seed1_step2000384.pt,0.0000,0.9890,0.0110,0.6809,0.0000,0.3191,0.5275,0.4725,0.0000,0.0000,0.0000,0.0000
+3v3_balanced,2,cond2_seed2_step2000384.pt,0.0000,0.6566,0.3434,0.7873,0.0000,0.2127,0.7672,0.2328,0.0000,0.0000,0.0000,0.0000
+3v3_balanced,3,step2000384.pt,0.0000,0.3911,0.6089,0.7628,0.0000,0.2372,0.7656,0.2344,0.0000,0.0000,0.0000,0.0000
+3v3_balanced,4,step2000384.pt,0.0000,0.8299,0.1701,0.5030,0.0000,0.4970,0.4231,0.5769,0.0000,0.0000,0.0000,0.0000
