@@ -91,7 +91,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--config_name', type=str, required=True,
                     help='Key from configs/scaling.yaml:configs (e.g. 3v3_balanced)')
-    ap.add_argument('--condition', type=int, required=True, choices=[1, 3, 4, 5])
+    ap.add_argument('--condition', type=int, required=True, choices=[1, 2, 3, 4, 5])
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--config_file', type=str, default='configs/scaling.yaml')
     ap.add_argument('--results_dir', type=str, default='results_scaling')
