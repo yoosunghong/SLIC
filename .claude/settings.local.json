@@ -63,7 +63,15 @@
       "Bash(echo \"batch_launcher_pid=$!\")",
       "Bash(mkdir -p C:/Users/PC/Documents/GitHub/de_paper/smacv2_poc/results_scaling/logs)",
       "Bash(disown)",
-      "Bash(echo \"launcher_pid=$!\")"
+      "Bash(echo \"launcher_pid=$!\")",
+      "PowerShell(Stop-Process -Id 55864, 56432, 68640 -Force)",
+      "Bash(export PYTHONPATH=/c/Users/PC/Documents/GitHub/de_paper)",
+      "Bash(bash run_6v6.sh)",
+      "Bash(echo \"Batch PID: $!\")",
+      "Bash(PYTHONPATH=/c/Users/PC/Documents/GitHub/de_paper python -u training/train_scaling.py --config_name 6v6_balanced --condition 1 --seed 0)",
+      "Bash(python -c \"import sys; print\\(sys.path\\)\")",
+      "PowerShell(python --version; \\(Get-Command python\\).Source)",
+      "Bash(awk '{print $5, $6, $7, $8, $9}')"
     ]
   }
 }

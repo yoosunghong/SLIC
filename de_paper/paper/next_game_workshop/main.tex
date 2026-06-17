@@ -1,4 +1,4 @@
-\documentclass[anon]{nextgame2026}
+\documentclass{nextgame2026}
 
 \PassOptionsToPackage{numbers,compress}{natbib}
 
@@ -11,14 +11,15 @@
 \usepackage{caption}
 
 
-\title[Learned Conventions vs.\ Theory-Informed Priors]
+
+\title[Translation Gap in Cooperative MARL]
 {Learned Coordination Conventions in Cooperative MARL:
-An Empirical Analysis of Role-Conditioned Routing Against Theory-Informed Priors}
+Measuring the Translation Gap Between Theory-Informed Roles and Learned Routing}
 
 
 \optauthor{%
-\Name{Anonymous Authors} \Email{email@example.com}\\
-\addr Affiliation, Country
+\Name{Yoosung Hong} \Email{yoosunghong.main@gmail.com}\\
+\addr Independent Researcher
 }
 
 
@@ -26,7 +27,7 @@ An Empirical Analysis of Role-Conditioned Routing Against Theory-Informed Priors
 
 \maketitle
 
-\keywords{multi-agent reinforcement learning, attention, game-theoretic learning, strategic conventions}
+\keywords{multi-agent reinforcement learning, role-conditioned attention, coordination conventions, interpretability, explainable RL}
 
 \begin{abstract}
 Role-semantic assignments supply priors over how heterogeneous agents may coordinate; cooperative MARL agents instead settle on conventions through decentralized, non-stationary learning, with no guarantee the resulting structure matches those priors -- an equilibrium selection question that theory alone cannot resolve. We ask whether the convention selected by training is legible from the policy architecture, and how it relates to a theory-informed role-semantic prior, using a diagnostic that combines a role-routing matrix, formation sensitivity ($\Delta_{\max}$), and gradient/occlusion attribution across three-role MiniGrid and SMACv2 (Terran), five MAPPO conditions, and a 3v3--9v9 scaling study.
@@ -41,11 +42,11 @@ A central question for game-theoretic learning is no longer only \emph{what equi
 
 We treat this as a question of coordination legibility: whether the role-conditioned interaction structure of a trained policy is measurable from its architecture, and how it relates to a theory-informed role-semantic prior. When role labels are injected into both \texttt{self\_tok} and \texttt{ally\_tok}, cross-attention exposes role-pair patterns to direct inspection. Our central claim is that this pathway yields a more concentrated, role-specific signature than flat MLP baselines and is robust to scaling, cross-scale transfer, and padding -- a measurable architectural property of the learned convention, not a claim that attention causally explains behavior or that the convention is an equilibrium.
 
-Contributions: (0) an empirical evaluation framework (role-routing matrix, $\Delta_{\max}$, occlusion) for measuring learned coordination conventions off trained policies; (i) an empirical framework (role-routing matrix, $\Delta_{\max}$, gradient/occlusion attribution) for reading role-conditioned conventions off a trained policy; (ii) evidence on three-role MiniGrid and SMACv2 (Terran) at 3v3--9v9 that label-conditioned attention yields more concentrated routing, better cross-scale zero-shot transfer, and padding-invariant behavior than MLP baselines; (iii) a 5-seed re-evaluation showing the learned convention partially aligns with the designer-specified prior, with the diagnostic itself flagging where small-$n$ seed noise manufactures apparent divergence.
+Contributions: (i) an empirical evaluation framework (role-routing matrix, $\Delta_{\max}$, and gradient/occlusion-based routing analysis) for measuring learned coordination conventions from trained cooperative MARL policies; (ii) evidence on three-role MiniGrid and SMACv2 (Terran) at 3v3--9v9 that label-conditioned attention yields more concentrated routing, stronger cross-scale zero-shot transfer, and padding-invariant behavior than MLP baselines; (iii) a 5-seed re-evaluation showing partial alignment between learned conventions and designer-specified priors, while exposing where small-$n$ seed noise manufactures apparent strategic divergence.
 \section{Related Work}
 \label{sec:related}
 
-ROMA~\cite{roma2020} learns latent role representations; we take the complementary view, analyzing how architectures exploit pre-defined role labels. Zambaldi et al.~\cite{zambaldi2018} use self-attention as a relational inductive bias for single-agent RL; entity-centric observations~\cite{entitycentric} provide the input format. Cooperative optimizers (QMIX~\cite{qmix}, MAPPO~\cite{mappo}) lack a structural path for role-pair routing, and prior attention-based MARL~\cite{maddpg,maattn} targets inter-agent communication rather than role-conditioned entity selection. RODE~\cite{rode2021} and UPDeT~\cite{updet2021} target performance and transfer; Other-Play~\cite{otherplay2020} and Off-Belief Learning~\cite{obl2021} address equilibrium selection by shaping which convention is learned. We instead hold the algorithm fixed and ask whether the selected convention becomes \emph{inspectable}, and how it relates to a role-semantic designer prior.
+Role-based MARL learns or decomposes roles to structure cooperation: ROMA~\cite{roma2020} learns latent roles and RODE~\cite{rode2021} decomposes tasks by role, with related lines on committed exploration and selective parameter sharing~\cite{maven2019,maac_role}; we instead analyze how architectures exploit \emph{pre-defined} role labels. On the architecture side, self-attention~\cite{attention2017,zambaldi2019} provides a relational inductive bias over entity-centric observations~\cite{entitycentric}, UPDeT~\cite{updet2021} uses transformers for transfer, and prior attention-based MARL~\cite{maddpg,maattn} targets inter-agent communication rather than role-conditioned entity selection, while cooperative optimizers (QMIX~\cite{qmix}, MAPPO~\cite{mappo}) lack a structural path for role-pair routing. Work on convention and equilibrium selection -- Other-Play~\cite{otherplay2020}, Off-Belief Learning~\cite{obl2021}, and human-AI coordination~\cite{overcooked2019} -- shapes \emph{which} convention is learned; we instead hold the algorithm fixed and ask whether the selected convention becomes \emph{inspectable}, and how it relates to a role-semantic designer prior. Methodologically this places us in explainable RL~\cite{xrl_survey2024}, and we treat attention weights cautiously given the ongoing debate on whether they constitute explanation~\cite{jain2019attention,wiegreffe2019attention}.
 
 \section{Mechanism: Role-Label-Conditioned Routing}
 \label{sec:theory}
@@ -59,7 +60,7 @@ ROMA~\cite{roma2020} learns latent role representations; we take the complementa
 \section{Method}
 \label{sec:method}
 
-\paragraph{Environments.} \textbf{Domain~1} is a custom $15{\times}15$ MiniGrid task with three role-specialized agents (Strike, Vanguard, Support) cooperating to capture and hold zones under role-specific reward shaping. \textbf{Domain~2} is a custom SMACv2 scenario using three Terran unit types as role proxies (Marine = Strike, Marauder = Vanguard, Medivac = Support). SMACv2 does not natively expose role labels; we inject a 3-dim unit-type one-hot into both the agent's own token and each ally token, preserving the structural condition required for role-conditioned Q/K routing.
+\paragraph{Environments.} \textbf{Domain~1} is a custom $15{\times}15$ MiniGrid~\cite{minigrid2023} task with three role-specialized agents (Strike, Vanguard, Support) cooperating to capture and hold zones under role-specific reward shaping. \textbf{Domain~2} is a custom SMACv2~\cite{smac2019,smacv2} scenario using three Terran unit types as role proxies (Marine = Strike, Marauder = Vanguard, Medivac = Support). SMACv2 does not natively expose role labels; we inject a 3-dim unit-type one-hot into both the agent's own token and each ally token, preserving the structural condition required for role-conditioned Q/K routing.
 
 \paragraph{Entity-centric observation.} Agents receive four named token groups -- \texttt{self\_tok}, \texttt{ally\_tok}, \texttt{enemy\_tok}, \texttt{zone\_tok} -- plus validity masks. The role one-hot (3 dims) appears in both \texttt{self\_tok} and each \texttt{ally\_tok} slot; this placement is load-bearing for the routing mechanism. The 3v3 SMACv2 observation is 65-dim (182-dim padded for the scaling study).
 
@@ -70,7 +71,7 @@ ROMA~\cite{roma2020} learns latent role representations; we take the complementa
   \label{fig:architecture}
 \end{figure}
 
-\paragraph{Five ablation conditions.} The conditions span two axes: \emph{architecture} (attention vs.\ MLP) and \emph{role-label + policy sharing}. \textbf{C1 Full}: per-set encoders (dim 64) + Intra-Set Self-Attn (residual+LN) + Cross-Attn with self as query; per-role policies, labels present. \textbf{C2}: C1 minus Intra-Set blocks. \textbf{C3 Role+MLP}: flat MLP, per-role, labels in input. \textbf{C4 No-Role (shared attention)}: C1 architecture, role one-hots zeroed, single shared policy. \textbf{C5 Flat MLP}: C3 with labels zeroed. C1 vs.\ C4 bundles label removal with a per-role$\to$shared-policy change (upper bound on label effect); C3 vs.\ C5 isolates label-in-input for MLP ($+1.6$\,pp, within noise); C4 vs.\ C5 confounds both axes plus a $3{\times}$ data-per-parameter advantage from sharing. All attention applies \texttt{key\_padding\_mask} with slot-0 force-unmask safety. Training uses MAPPO~\cite{mappo} with identical hyperparameters (2M steps; 5 seeds for all 3v3 conditions and 9v9 C1/C3, 3 seeds for 6v6 C1/C3; GAE $\lambda{=}0.95$, $\gamma{=}0.99$, clip $0.2$, entropy $0.01$, Adam $3{\times}10^{-4}$, batch 512); reward mix $r=0.8 r_{\text{ind}}+0.2 \bar r_{\text{team}}$.
+\paragraph{Five ablation conditions.} The conditions span two axes: \emph{architecture} (attention vs.\ MLP) and \emph{role-label + policy sharing}. \textbf{C1 Full}: per-set encoders (dim 64) + Intra-Set Self-Attn (residual+LN) + Cross-Attn with self as query; per-role policies, labels present. \textbf{C2}: C1 minus Intra-Set blocks. \textbf{C3 Role+MLP}: flat MLP, per-role, labels in input. \textbf{C4 No-Role (shared attention)}: C1 architecture, role one-hots zeroed, single shared policy. \textbf{C5 Flat MLP}: C3 with labels zeroed. C1 vs.\ C4 bundles label removal with a per-role$\to$shared-policy change (upper bound on label effect); C3 vs.\ C5 isolates label-in-input for MLP ($+1.6$\,pp, within noise); C4 vs.\ C5 confounds both axes plus a $3{\times}$ data-per-parameter advantage from sharing. All attention applies \texttt{key\_padding\_mask} with slot-0 force-unmask safety. Training uses MAPPO~\cite{mappo} (PPO~\cite{ppo2017} with a centralized critic) and identical hyperparameters (2M steps; 5 seeds for all 3v3 conditions and 9v9 C1/C3, 3 seeds for 6v6 C1/C3; GAE~\cite{gae2016} $\lambda{=}0.95$, $\gamma{=}0.99$, clip $0.2$, entropy $0.01$, Adam $3{\times}10^{-4}$, batch 512); reward mix $r=0.8 r_{\text{ind}}+0.2 \bar r_{\text{team}}$.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -92,7 +93,7 @@ $n$ seeds & 5 & 5 & 5 & 5 & 5 \\
 \end{tabular}
 \end{table}
 
-Three observations matter. Attention helps: C1 outperforms C3 by 31.4\,pp. Intra-set context helps: C2 trails C1 by 13.8\,pp. Removing labels under shared-attention is associated with a 14.0\,pp drop (C4 vs.\ C1) -- but this contrast also swaps per-role for shared policies, so it upper-bounds rather than isolates the label effect. C3 and C5 are statistically indistinguishable ($0.480$ vs.\ $0.464$): adding labels to an MLP does not by itself produce useful role-conditioned routing. Expanding all 3v3 conditions to 5 seeds preserves the sign of every contrast.
+Three observations matter. Attention helps: C1 outperforms C3 by 31.4\,pp. Intra-set context helps: C2 trails C1 by 13.8\,pp. Removing labels under shared-attention is associated with a 14.0\,pp drop (C4 vs.\ C1; a label$+$sharing confound that upper-bounds the label effect, \S\ref{sec:method}). C3 and C5 are statistically indistinguishable ($0.480$ vs.\ $0.464$): adding labels to an MLP does not by itself produce useful role-conditioned routing. Expanding all 3v3 conditions to 5 seeds preserves the sign of every contrast.
 
 \subsection{Scaling Study: 3v3, 6v6, 9v9}
 \label{sec:scaling}
@@ -128,7 +129,7 @@ In 3v3, C1 is clearly better than C3. In 6v6/9v9 the full model remains ahead on
   \vspace{0pt}
   \centering\small
   \setlength{\tabcolsep}{5pt}
-  \captionof{table}{Zero-shot transfer of 3v3-trained checkpoints, evaluated without retraining (50 fresh episodes per seed). Win rate is mean$\pm$std over 5 seeds. The 3v3 row ($0.796{\pm}0.054$) differs slightly from Table~\ref{tab:track1} ($0.794{\pm}0.033$) because Table~\ref{tab:track1} reports the last-10 evaluation average from training, whereas this table uses 50 fresh post-training rollouts.}
+  \captionof{table}{Zero-shot transfer of 3v3-trained checkpoints, evaluated without retraining (50 fresh episodes per seed; mean$\pm$std over 5 seeds). The 3v3 row differs slightly from Table~\ref{tab:track1}, which reports the training-time last-10 average rather than fresh rollouts.}
   \label{tab:transfer}
   \begin{tabular}{lccc}
   \toprule
@@ -184,24 +185,24 @@ Support  & $\mathbf{0.633{\pm}0.200}$ & $0.367{\pm}0.200$ & --- \\
 \end{tabular}
 \end{table}
 
-The matrix is concentrated, role-specific, and stably off-diagonal. Strike's largest routing weight is on Support, consistent with prediction~4 in $4/5$ seeds at both 3v3 and 9v9; the earlier 3-seed run flipped on a single seed under retraining-equivalent stochasticity. Vanguard and Support both route primarily toward Strike, an architecture-exposed pattern consistent with the two non-DPS roles attending to the engagement-driver.
+The matrix is concentrated, role-specific, and stably off-diagonal. Strike's largest routing weight is on Support, consistent with prediction~4 in $4/5$ seeds at both 3v3 and 9v9. Vanguard and Support both route primarily toward Strike, consistent with the two non-DPS roles attending to the engagement-driver.
 
-\paragraph{MLP gradient attribution.} For Cond.~3 we compute input gradients of the maximum action logit, separately measuring mean magnitude on spatial features and role-onehot dims. The Spatial/Role ratio is $5.8\times$/$2.3\times$/$3.7\times$ (Strike/Vanguard/Support): the MLP registers some role signal but spatial features dominate. The routing-matrix entry std is $0.246$ (Cond.~1) versus $0.055$ for the gradient-based pseudo-routing (Cond.~3), a $4.5\times$ concentration gap. We use std as a scale-comparable concentration proxy (zero under uniform routing, larger when a few role-pair entries dominate); row-entropy and KL-from-uniform are reasonable alternatives, and the magnitude of the gap makes the qualitative ranking robust to the choice.
+\paragraph{MLP gradient attribution.} For Cond.~3 we compute input gradients of the maximum action logit, separately measuring mean magnitude on spatial features and role-onehot dims. The Spatial/Role ratio is $5.8\times$/$2.3\times$/$3.7\times$ (Strike/Vanguard/Support): the MLP registers some role signal but spatial features dominate. The routing-matrix entry std is $0.246$ (Cond.~1) versus $0.055$ for the gradient-based pseudo-routing (Cond.~3), a $4.5\times$ concentration gap. We use entry std as a scale-comparable concentration proxy (zero under uniform routing); row-entropy and KL-from-uniform give the same ranking.
 
-\paragraph{Unified routing metric: occlusion.} Attention weights and MLP gradients are not strictly apples-to-apples, so we additionally measure routing via \emph{occlusion sensitivity} -- zeroing each ally token (mask bit kept at 1) and measuring policy KL from baseline -- which is well-defined for both architectures. On C1 at 3v3, occlusion correlates with attention at row-normalized Pearson $r{=}0.976$ (raw $r{=}0.655$). On C3 at 9v9, occlusion produces erratic magnitudes one to two orders larger than C1 (max-row KL $\approx 5.6$ vs.\ $\approx 0.08$), with the dominant slot varying across seeds rather than being role-conditioned: the MLP is highly sensitive to slot contents but not in a role-pair-structured way.
+\paragraph{Unified routing metric: occlusion.} Attention weights and MLP gradients are not strictly apples-to-apples, so we additionally measure routing via \emph{occlusion sensitivity} -- zeroing each ally token (mask bit kept at 1) and measuring policy KL from baseline -- which is well-defined for both architectures. On C1 at 3v3, occlusion correlates with attention at row-normalized Pearson $r{=}0.976$ (raw $r{=}0.655$). On C3 at 9v9, occlusion produces erratic magnitudes one to two orders larger than C1 (max-row KL $\approx 5.6$ vs.\ $\approx 0.08$), with the dominant slot varying across seeds rather than being role-conditioned -- the MLP is sensitive to slot contents but not in a role-structured way.
 
-\paragraph{Domain~1 replication (exploratory, 3 seeds).} On MiniGrid, Cond.~1 yields entry std $0.252$, quantitatively matching SMACv2 ($0.246$). The Strike$\to$X preference direction differs (Vanguard-dominant on MiniGrid vs.\ Support-dominant on SMACv2), reflecting different role semantics; the replication target is concentration, not the specific role pair.
+\paragraph{Domain~1 replication (exploratory, 3 seeds).} On MiniGrid, Cond.~1 yields entry std $0.252$, matching SMACv2 ($0.246$). The preferred role pair differs (Vanguard-dominant vs.\ Support-dominant), reflecting different role semantics; the replication target is concentration, not the specific pair.
 
 \paragraph{Cond.~2 routing.} Cond.~2 gives entry std $0.286$, comparable to Cond.~1 and far above Cond.~3: cross-attention alone is sufficient for routing \emph{concentration}. However, Cond.~2 routes Strike$\to$Vanguard in $4/5$ seeds ($0.751$ vs.\ $0.249$), opposite to the role-semantic prior and to Cond.~1, consistent with intra-set blocks influencing which role-pair routing is selected.
 
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{Summary.} Across two domains, five conditions, and three team sizes, label-conditioned attention yields a stable, role-specific coordination signature: $4.5\times$ more concentrated routing than MLP, positive zero-shot 3v3$\to$9v9 transfer, padding-invariance, and a 14.0\,pp gap when labels are removed under shared attention. The signature is robust where win-rate is not -- 6v6/9v9 gaps shrink into noise while routing structure persists -- and 5-seed re-evaluation aligns 3/4 prior-derived predictions (one tied), reversing two small-$n$ artifacts. Cond.~2 suggests cross-attention supplies \emph{concentration} while intra-set blocks bias \emph{which} role-pair is selected.
+\paragraph{Summary.} Across two domains, five conditions, and three team sizes, label-conditioned attention yields a stable, role-specific signature ($4.5\times$ more concentrated routing than MLP, positive zero-shot 3v3$\to$9v9 transfer, padding-invariance, $14.0$\,pp from label removal under shared attention) that is robust where win-rate is not: 6v6/9v9 gaps shrink into noise while routing structure persists. The 5-seed re-evaluation aligns 3/4 prior-derived predictions (one tied), reversing two small-$n$ artifacts; Cond.~2 suggests cross-attention supplies \emph{concentration} while intra-set blocks bias \emph{which} role-pair is selected.
 
-\paragraph{Broader implication (speculative).} Beyond the specific role-pair setting studied here, the proposed diagnostic offers a general template for measuring whether any learned convention is legible from policy architecture -- a property that becomes increasingly relevant as agentic AI systems coordinate in open-ended environments without designer-specified equilibria. Scalable coordination diagnostics of this kind may complement reward-based evaluation in settings where strategic structure, not performance alone, determines system safety and interpretability. We offer this as a future direction, not a demonstrated result.
+\paragraph{Broader implication (speculative).} Beyond the role-pair setting studied here, the diagnostic offers a general template for measuring whether a learned convention is legible from policy architecture -- increasingly relevant as agentic systems coordinate in open-ended environments without designer-specified equilibria, where strategic structure rather than performance alone may determine safety and interpretability. We offer this as a future direction, not a demonstrated result.
 
-\paragraph{Limitations.} Both domains share an entity-centric schema and three roles; SMACv2 evidence is restricted to Terran and 3v3--9v9. Attention weights are not causal explanations -- we report them as architecture-exposed patterns and corroborate via gradient/occlusion attribution; the entry-std and occlusion ($r{=}0.976$) metrics are useful but heuristic. Role labels are manually injected; deployments without a designer schema must pair the routing pathway with role discovery (e.g., RODE~\cite{rode2021}). The C1 vs.\ C4 contrast bundles label removal with policy sharing, upper-bounding rather than isolating the label effect, and the Cond.~2 ablation also perturbs capacity. Domain~1 Track~2 and 6v6 C1/C3 are 3-seed exploratory runs; all others use 5. We do not claim the learned convention is an equilibrium or optimal under any solution concept, nor that alignment with the prior holds beyond these designer-specified roles -- the contribution is a measurement procedure, not an optimality result.
+\paragraph{Limitations.} Both domains share an entity-centric schema and three roles; SMACv2 evidence is restricted to Terran and 3v3--9v9. Attention weights are not causal explanations; we report them as architecture-exposed patterns corroborated by gradient/occlusion attribution, whose entry-std and occlusion metrics remain heuristic. Role labels are manually injected; deployments without a designer schema must pair the routing pathway with role discovery (e.g., RODE~\cite{rode2021}). The C1 vs.\ C4 contrast bundles label removal with policy sharing, upper-bounding rather than isolating the label effect, and the Cond.~2 ablation also perturbs capacity. Domain~1 Track~2 and 6v6 C1/C3 are 3-seed exploratory runs; all others use 5. We do not claim the learned convention is an equilibrium or optimal under any solution concept, nor that alignment with the prior holds beyond these designer-specified roles -- the contribution is a measurement procedure, not an optimality result.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -209,6 +210,22 @@ The matrix is concentrated, role-specific, and stably off-diagonal. Strike's lar
 We introduced an empirical diagnostic for the coordination conventions selected by cooperative MARL -- a role-routing matrix, formation sensitivity, and a unified occlusion metric -- and used it to compare the learned convention against a theory-informed role-semantic prior. Label-conditioned attention produces a substantially more concentrated, role-specific signature than MLP baselines, stable under scaling and zero-shot 3v3$\to$9v9 transfer. A 5-seed re-evaluation aligns 3/4 prior-derived predictions (one tied) and reveals two earlier divergences as small-$n$ artifacts, underscoring the need for seed-aware structural evaluation. The contribution is a measurement procedure, not an equilibrium or causal claim; future work should extend it to learned role schemas and non-Terran domains.
 
 
+\acks{The authors would like to thank Professor Jinseok Seo from Dong-Eui University and Gyuyeol Jeong from Netmarble for their insightful discussions and valuable comments that greatly improved this work.}
+
 \bibliography{refs}
+
+\clearpage
+\section*{Camera-Ready Edits Summary}
+
+This page summarizes the changes made relative to the original submission. It is provided for workshop administration and transparency and is not part of the technical content of the paper.
+
+\begin{itemize}
+  \item \textbf{Author information.} De-anonymized the manuscript and added author name and contact email, as required for the camera-ready version.
+  \item \textbf{Framing (Reviews 2 and 3).} Reframed the keywords and Related Work to own an explainable-RL / coordination-interpretability identity rather than borrowing game-theoretic language the paper does not formally use; the methodological positioning now cites the explainable-RL literature and the ``attention as explanation'' debate, and we reiterate that attention weights are treated cautiously as architecture-exposed patterns, not causal explanations.
+  \item \textbf{References (all reviews).} Expanded the bibliography from 11 to 24 entries. Added grouped citations for role-based MARL, attention/transformers in (MA)RL, convention/equilibrium selection and human-AI coordination, the SMAC/SMACv2 and MiniGrid benchmarks, the PPO/GAE training algorithms, and explainable-RL / attention-interpretation methodology.
+  \item \textbf{C1 vs.\ C4 confound (Review 1).} No change to results; we retained and kept prominent the existing statements (abstract, Section~3, Section~4, Limitations) that the C1-vs-C4 contrast bundles label removal with policy sharing and therefore upper-bounds rather than isolates the label effect.
+  \item \textbf{Scope and causality caveats (Reviews 1, 2, 3).} Retained the Limitations discussion noting the shared entity-centric schema, three-role / Terran restriction, the non-causal nature of the diagnostic, and that the contribution is a measurement procedure rather than an equilibrium or optimality result.
+  \item \textbf{No new experiments or figures.} No quantitative results, tables, or figures were added or altered; all numbers are unchanged from the accepted version.
+\end{itemize}
 
 \end{document}
