@@ -56,3 +56,6 @@ Miniconda3-latest-Linux-x86_64.sh
 
 # Claude Code local settings
 .claude/
+
+# Conference poster (local only)
+de_paper/paper/next_game_workshop/poster/
