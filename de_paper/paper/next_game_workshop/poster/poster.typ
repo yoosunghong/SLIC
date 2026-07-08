@@ -4,7 +4,10 @@
 //
 //  Build:   typst compile poster.typ poster.pdf
 //  Requires: Typst >= 0.11  (uses grid.cell colspan + table.hline)
-//  Self-contained: no external images, no packages, no network assets.
+//  No packages, no network assets. Sole external asset:
+//    ./icml_paper_qr.png   (QR -> github.com/yoosunghong/SLIC)
+//  Kept beside the source so `typst compile poster.typ` needs no --root.
+//  The architecture diagram is drawn natively, not imported.
 //
 //  Layout knobs (top of file): BODY, GUT, SH, R.
 //  If a column overruns the page, drop BODY by 1pt — everything is relative.
@@ -143,11 +146,21 @@
   align(center + horizon, text(size: 26pt, fill: muted, weight: 700, [—])),
 )
 
-// Dashed placeholder frame (logo / QR)
+// Dashed placeholder frame (logo)
 #let logobox(label) = block(
   width: 100%, height: 108pt, radius: 8pt, fill: white,
   stroke: (paint: border-col, thickness: 2pt, dash: "dashed"),
   align(center + horizon, text(size: 17pt, fill: muted, weight: 600, label)),
+)
+
+// QR card. Quiet zone comes from the PNG itself; the white inset adds margin.
+#let qrbox(path, caption) = block(
+  width: 100%, radius: 8pt, fill: white, inset: 10pt,
+  align(center, stack(
+    spacing: 7pt,
+    image(path, width: 152pt),
+    text(size: 14.5pt, fill: navy, weight: 600, caption),
+  )),
 )
 
 // =============================================================================
@@ -158,7 +171,7 @@
   grid(
     columns: (190pt, 1fr, 190pt), gutter: 30pt, align: horizon,
 
-    logobox[INSTITUTION\ LOGO],
+    logobox[WORKSHOP LOGO\ #text(size: 14pt)[(optional)]],
 
     align(center)[
       #text(size: 20pt, fill: cyan, weight: 700, tracking: 3pt)[
@@ -180,11 +193,12 @@
       #v(4pt)
       #text(size: 21pt, fill: rgb("#B9CBDD"))[
         Independent Researcher #h(14pt)·#h(14pt)
-        `yoosunghong.main@gmail.com` #h(14pt)·#h(14pt) `github: yoosung.dev`
+        `yoosunghong.main@gmail.com` #h(14pt)·#h(14pt)
+        `github.com/yoosunghong/SLIC`
       ]
     ],
 
-    logobox[QR CODE\ (paper + code)],
+    qrbox("icml_paper_qr.png")[Paper + code],
   ),
 )
 
@@ -807,8 +821,10 @@
           #v(10pt)
           #text(fill: navy, weight: 600)[
             `yoosunghong.main@gmail.com`
-            #h(8pt)·#h(8pt)
-            `github: yoosung.dev`
+            #linebreak()
+            #link("https://github.com/yoosunghong/SLIC")[
+              `github.com/yoosunghong/SLIC`
+            ]
           ]
         ],
       )

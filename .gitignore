@@ -53,3 +53,6 @@ runs/
 .env
 Miniconda3-latest-Linux-x86_64.sh
 .claude/settings.local.json
+
+# Claude Code local settings
+.claude/
