@@ -133,8 +133,10 @@ typst compile poster.typ poster.pdf
                Measuring the Translation Gap Between Theory-Informed Roles
                and Learned Routing},
   author    = {Hong, Yoosung},
-  booktitle = {NeXT Game Workshop},
-  year      = {2026}
+  booktitle = {NExT-Game: NEw frontiers in GAME-Theoretic learning,
+               ICML 2026 Workshop},
+  year      = {2026},
+  address   = {Seoul, South Korea}
 }
 ```
 
